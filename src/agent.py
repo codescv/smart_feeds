@@ -1,3 +1,4 @@
+from typing import Optional
 import os
 from google.adk.agents import Agent
 from src.tools.mcp_browser import get_browser_toolset
@@ -5,7 +6,7 @@ from src.tools.rss import fetch_rss_feed
 from src.tools.storage import append_daily_log
 
 
-def create_agent(model_id=None):
+def create_agent(model_id=None, user_data_dir: Optional[str] = None):
     """
     Creates and configures the Smart Feeds agent.
     """
@@ -20,7 +21,7 @@ def create_agent(model_id=None):
             interests_content = f.read()
 
     # Initialize browser toolset
-    browser_toolset = get_browser_toolset()
+    browser_toolset = get_browser_toolset(user_data_dir=user_data_dir)
 
     instruction = f"""
     You are a personal content curator agent. Your goal is to help the user manage information overload.

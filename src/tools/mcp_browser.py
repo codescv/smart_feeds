@@ -3,7 +3,7 @@ import logging
 import asyncio
 import subprocess
 import sys
-from typing import List
+from typing import List, Optional
 from google.adk.tools import McpToolset
 from google.adk.agents import Agent
 from google.adk.runners import Runner
@@ -13,10 +13,10 @@ from mcp import StdioServerParameters
 logger = logging.getLogger(__name__)
 
 # Constants
-USER_DATA_DIR = os.path.abspath("inputs/browser_data")
+DEFAULT_USER_DATA_DIR = os.path.abspath("inputs/browser_data")
 
 
-def _get_mcp_args(headless: bool) -> List[str]:
+def _get_mcp_args(headless: bool, user_data_dir: Optional[str] = None) -> List[str]:
     """
     Constructs the arguments for the Playwright MCP server.
     """
@@ -28,24 +28,29 @@ def _get_mcp_args(headless: bool) -> List[str]:
     if proxy_server:
         args.append(f"--proxy-server={proxy_server}")
 
-    args.append(f"--user-data-dir={USER_DATA_DIR}")
+    if user_data_dir is None:
+        user_data_dir = DEFAULT_USER_DATA_DIR
+
+    args.append(f"--user-data-dir={user_data_dir}")
 
     if headless:
         args.append("--headless")
 
-    print('args:', args)
+    print("args:", args)
 
     return args
 
 
-def get_browser_toolset(headless: bool = True) -> McpToolset:
+def get_browser_toolset(
+    headless: bool = True, user_data_dir: Optional[str] = None
+) -> McpToolset:
     """
     Creates an McpToolset for the Playwright MCP server.
     """
     # The actual args passed to McpToolset must be the ones AFTER "npx"
     # because McpToolset takes command="npx" and args=[...].
     # _get_mcp_args returns the args for npx.
-    args = _get_mcp_args(headless=headless)
+    args = _get_mcp_args(headless=headless, user_data_dir=user_data_dir)
     logger.info(f"Initializing Playwright MCP with args: {args}")
 
     return McpToolset(
@@ -56,10 +61,10 @@ def get_browser_toolset(headless: bool = True) -> McpToolset:
     )
 
 
-async def _run_configuration_direct():
+async def _run_configuration_direct(user_data_dir: Optional[str] = None):
     print("Initializing Browser via MCP...")
     # Initialize toolset in headed mode
-    toolset = get_browser_toolset(headless=False)
+    toolset = get_browser_toolset(headless=False, user_data_dir=user_data_dir)
 
     try:
         print("Connecting to MCP server...")
@@ -115,8 +120,8 @@ async def _run_configuration_direct():
         await toolset.close()
 
 
-def configure_browser_session():
+def configure_browser_session(user_data_dir: Optional[str] = None):
     """
     Launches a browser using the MCP toolset directly.
     """
-    asyncio.run(_run_configuration_direct())
+    asyncio.run(_run_configuration_direct(user_data_dir=user_data_dir))
