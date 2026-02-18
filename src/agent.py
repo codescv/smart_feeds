@@ -21,7 +21,7 @@ def create_agent(model_id=None, user_data_dir: Optional[str] = None):
             interests_content = f.read()
 
     # Initialize browser toolset
-    browser_toolset = get_browser_toolset(user_data_dir=user_data_dir)
+    browser_toolset = get_browser_toolset(user_data_dir=user_data_dir, headless=False)
 
     instruction = f"""
     You are a personal content curator agent. Your goal is to help the user manage information overload.

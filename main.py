@@ -52,18 +52,25 @@ async def process_source(
     )
 
     if source_type == "website":
-        prompt = f"Please check this website source: {url}. Fetch its content, filter for my interests, and summarize if relevant."
+        prompt = (
+            f"Please check this website source: `{url}`\n"
+            "Use browser tool to fetch its content, filter for my interests, and summarize if relevant."
+        )
     else:
-        prompt = f"Please check this RSS feed: {url}. Fetch its items, filter for my interests, and summarize if relevant."
+        prompt = (
+            f"Please check this RSS feed: `{url}`\n"
+            "Use `fetch_rss_feed` to Fetch its items, filter for my interests, and summarize if relevant."
+        )
 
     try:
-        events = await runner.run_debug(prompt, quiet=True)
+        events = await runner.run_debug(prompt, quiet=False)
         if events is None:
             events = []
 
         # Find the last response from the agent
         final_response = None
         if events:
+            print(events)
             for event in reversed(events):
                 if event.author == agent.name and event.content:
                     if event.content.parts:
