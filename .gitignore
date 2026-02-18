@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# ADK
+.adk
+
 # Input user data
 inputs/
 data/
