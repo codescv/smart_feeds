@@ -1,6 +1,6 @@
 import os
 from google.adk.agents import Agent
-from src.tools.browser import fetch_page_content
+from src.tools.mcp_browser import get_browser_toolset
 from src.tools.rss import fetch_rss_feed
 from src.tools.storage import append_daily_log
 
@@ -19,6 +19,9 @@ def create_agent(model_id=None):
         with open(interests_path, "r") as f:
             interests_content = f.read()
 
+    # Initialize browser toolset
+    browser_toolset = get_browser_toolset()
+
     instruction = f"""
     You are a personal content curator agent. Your goal is to help the user manage information overload.
     
@@ -27,7 +30,9 @@ def create_agent(model_id=None):
     
     Your workflow is:
     1. You will be given a source (URL or RSS feed).
-    2. Fetch the content using `fetch_page_content` (for websites) or `fetch_rss_feed` (for RSS).
+    2. Fetch the content. 
+       - For websites: Use the available browser tools (e.g., `navigate` to the URL). You may need to use `screenshot` or `evaluate` to inspect content if needed, but primarily get the text content.
+       - For RSS: Use `fetch_rss_feed`.
     3. Analyze the content against the user's interests.
     4. FILTER: If the content is NOT relevant or is "noise" (e.g. celebrity gossip, sports, politics if not interested), IGNORE it.
     5. SUMMARIZE: If the content is relevant, create a concise summary.
@@ -46,7 +51,7 @@ def create_agent(model_id=None):
         name="content_curator",
         model=model_id,
         instruction=instruction,
-        tools=[fetch_page_content, fetch_rss_feed, append_daily_log],
+        tools=[browser_toolset, fetch_rss_feed, append_daily_log],
     )
 
     return agent

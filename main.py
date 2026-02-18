@@ -4,7 +4,7 @@ import os
 import yaml
 import asyncio
 from dotenv import load_dotenv
-from src.tools.browser import configure_browser_session
+from src.tools.mcp_browser import configure_browser_session
 from src.agent import create_agent
 from google.adk.runners import Runner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
@@ -54,12 +54,14 @@ async def process_source(source_type: str, url: str, model_id: Optional[str] = N
 
         # Find the last response from the agent
         final_response = None
-        for event in reversed(events):
-            if event.author == agent.name and event.content:
-                text_parts = [p.text for p in event.content.parts if p.text]
-                if text_parts:
-                    final_response = "".join(text_parts)
-                    break
+        if events:
+            for event in reversed(events):
+                if event.author == agent.name and event.content:
+                    if event.content.parts:
+                        text_parts = [p.text for p in event.content.parts if p.text]
+                        if text_parts:
+                            final_response = "".join(text_parts)
+                            break
 
         if final_response:
             print(f"Agent:\n{final_response}")
@@ -125,10 +127,11 @@ async def run_chat_loop(model_id: Optional[str] = None):
 
             for event in reversed(events):
                 if event.author == agent.name and event.content:
-                    text_parts = [p.text for p in event.content.parts if p.text]
-                    if text_parts:
-                        print(f"Agent: {''.join(text_parts)}")
-                        break
+                    if event.content.parts:
+                        text_parts = [p.text for p in event.content.parts if p.text]
+                        if text_parts:
+                            print(f"Agent: {''.join(text_parts)}")
+                            break
         except KeyboardInterrupt:
             break
         except Exception as e:
