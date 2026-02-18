@@ -5,10 +5,12 @@ from src.tools.rss import fetch_rss_feed
 from src.tools.storage import append_daily_log
 
 
-def create_agent():
+def create_agent(model_id=None):
     """
     Creates and configures the Smart Feeds agent.
     """
+    if model_id is None:
+        model_id = os.getenv("MODEL_ID", "gemini-2.0-flash")
 
     # Load interests
     interests_path = "inputs/interests.md"
@@ -42,7 +44,7 @@ def create_agent():
 
     agent = Agent(
         name="content_curator",
-        model=os.getenv("MODEL_ID", "gemini-2.0-flash"),
+        model=model_id,
         instruction=instruction,
         tools=[fetch_page_content, fetch_rss_feed, append_daily_log],
     )

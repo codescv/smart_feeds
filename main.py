@@ -18,6 +18,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+from typing import Optional
+
 app = typer.Typer()
 
 
@@ -29,13 +31,13 @@ def configure_browser():
     configure_browser_session()
 
 
-async def process_source(source_type: str, url: str):
+async def process_source(source_type: str, url: str, model_id: Optional[str] = None):
     """
     Runs the agent for a single source.
     """
     print(f"\n>>> Processing {source_type}: {url}")
 
-    agent = create_agent()
+    agent = create_agent(model_id=model_id)
     runner = Runner(
         agent=agent, app_name="smart-feeds", session_service=InMemorySessionService()
     )
@@ -69,7 +71,7 @@ async def process_source(source_type: str, url: str):
         print(f"Error: {e}")
 
 
-async def run_batch():
+async def run_batch(model_id: Optional[str] = None):
     sources_path = "inputs/sources.yaml"
     if not os.path.exists(sources_path):
         print(f"Sources file not found at {sources_path}")
@@ -82,27 +84,31 @@ async def run_batch():
     rss_feeds = sources_config.get("rss", [])
 
     for url in websites:
-        await process_source("website", url)
+        await process_source("website", url, model_id=model_id)
 
     for url in rss_feeds:
-        await process_source("rss", url)
+        await process_source("rss", url, model_id=model_id)
 
 
 @app.command()
-def run():
+def run(
+    model: Optional[str] = typer.Option(
+        None, help="Model ID to use (e.g., gemini-2.0-flash)"
+    ),
+):
     """
     Runs the Smart Feeds agent to curate content from configured sources.
     """
     print("Starting Smart Feeds curation run...")
-    asyncio.run(run_batch())
+    asyncio.run(run_batch(model_id=model))
     print("Run complete.")
 
 
-async def run_chat_loop():
+async def run_chat_loop(model_id: Optional[str] = None):
     print("Starting interactive chat mode (Debug)...")
     print("Type 'exit' to quit.")
 
-    agent = create_agent()
+    agent = create_agent(model_id=model_id)
     runner = Runner(
         agent=agent, app_name="smart-feeds", session_service=InMemorySessionService()
     )
@@ -131,11 +137,13 @@ async def run_chat_loop():
 
 
 @app.command()
-def webui(port: int = 8501):
+def webui(
+    port: int = 8501, model: Optional[str] = typer.Option(None, help="Model ID to use")
+):
     """
     Launches an interactive chat session for debugging the agent.
     """
-    asyncio.run(run_chat_loop())
+    asyncio.run(run_chat_loop(model_id=model))
 
 
 if __name__ == "__main__":
