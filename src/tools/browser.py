@@ -10,6 +10,23 @@ import html2text
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Realistic Chrome User Agent
+USER_DATA_DIR = os.path.abspath("inputs/browser_data")
+
+# Possible paths for Google Chrome on macOS
+CHROME_PATHS = [
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
+]
+
+
+def get_chrome_executable_path() -> Optional[str]:
+    """Finds the Google Chrome executable path."""
+    for path in CHROME_PATHS:
+        if os.path.exists(path):
+            return path
+    return None
+
 
 def get_proxy_config() -> Optional[Dict[str, str]]:
     """Get proxy configuration from environment variables."""
@@ -22,35 +39,31 @@ def get_proxy_config() -> Optional[Dict[str, str]]:
 def fetch_page_content(url: str, headless: bool = True) -> str:
     """
     Fetches the content of a URL using Playwright.
-    Uses the proxy and auth state if available.
+    Uses the proxy and persistent user data directory.
     Returns the content as Markdown.
     """
-    auth_state_path = "inputs/auth_state.json"
     proxy_config = get_proxy_config()
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=headless, proxy=proxy_config)
+        # Try to use Chrome if available, otherwise use bundled Chromium
+        executable_path = get_chrome_executable_path()
 
-        # Load auth state if it exists and is not empty
-        context_options = {}
-        if os.path.exists(auth_state_path):
-            try:
-                with open(auth_state_path, "r") as f:
-                    state = json.load(f)
-                    if state:
-                        # context_options['storage_state'] = auth_state_path
-                        # We pass the path directly to new_context
-                        pass
-            except json.JSONDecodeError:
-                logger.warning(
-                    f"Auth state file {auth_state_path} is invalid. Ignoring."
-                )
+        # Args for launch_persistent_context
+        launch_args = {
+            "user_data_dir": USER_DATA_DIR,
+            "headless": headless,
+            "proxy": proxy_config,
+            "viewport": {"width": 1280, "height": 720},
+            "locale": "en-US",
+            # We need to accept downloads to avoid popups, though we ignore them
+            "accept_downloads": True,
+        }
 
-        # Create context with storage_state if valid
-        if os.path.exists(auth_state_path) and os.path.getsize(auth_state_path) > 2:
-            context = browser.new_context(storage_state=auth_state_path)
-        else:
-            context = browser.new_context()
+        if executable_path:
+            logger.info(f"Using Chrome executable: {executable_path}")
+            launch_args["executable_path"] = executable_path
+
+        context = p.chromium.launch_persistent_context(**launch_args)
 
         page = context.new_page()
 
@@ -82,38 +95,49 @@ def fetch_page_content(url: str, headless: bool = True) -> str:
             logger.error(f"Error fetching {url}: {e}")
             return f"Error fetching {url}: {e}"
         finally:
-            browser.close()
+            context.close()
 
 
 def configure_browser_session():
     """
-    Launches a headed browser for the user to log in.
-    Saves the storage state to inputs/auth_state.json.
+    Launches a headed browser with persistent context for the user to log in.
     """
-    auth_state_path = "inputs/auth_state.json"
     proxy_config = get_proxy_config()
 
     print(f"Launching browser with proxy: {proxy_config}")
+    print(f"User Data Directory: {USER_DATA_DIR}")
+
+    executable_path = get_chrome_executable_path()
+    if executable_path:
+        print(f"Using Chrome executable: {executable_path}")
+    else:
+        print("Using bundled Chromium (Chrome not found)")
+
     print("Please log in to your websites.")
     print(
-        "Press Enter in this terminal when you are done to save the session and exit."
+        "Press Enter in this terminal when you are done to exit (state is saved automatically to user-data-dir)."
     )
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False, proxy=proxy_config)
+        launch_args = {
+            "user_data_dir": USER_DATA_DIR,
+            "headless": False,
+            "proxy": proxy_config,
+            "viewport": {"width": 1280, "height": 720},
+            "locale": "en-US",
+        }
 
-        # Load existing state if available
-        if os.path.exists(auth_state_path) and os.path.getsize(auth_state_path) > 2:
-            context = browser.new_context(storage_state=auth_state_path)
-        else:
-            context = browser.new_context()
+        if executable_path:
+            launch_args["executable_path"] = executable_path
+
+        context = p.chromium.launch_persistent_context(**launch_args)
 
         page = context.new_page()
-        page.goto("https://www.google.com")  # Start somewhere
+        try:
+            page.goto("https://www.google.com")  # Start somewhere
+        except Exception as e:
+            print(f"Warning: Failed to load initial page: {e}")
 
         input()  # Wait for user
 
-        # Save state
-        context.storage_state(path=auth_state_path)
-        print(f"Session saved to {auth_state_path}")
-        browser.close()
+        context.close()
