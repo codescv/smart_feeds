@@ -1,7 +1,7 @@
 import typer
 import logging
 import os
-import yaml
+import tomllib
 import asyncio
 from dotenv import load_dotenv
 from src.tools.mcp_browser import configure_browser_session
@@ -37,6 +37,7 @@ def configure_browser():
 async def process_source(
     source_type: str,
     url: str,
+    instruction: Optional[str] = None,
     model_id: Optional[str] = None,
 ):
     """
@@ -50,18 +51,15 @@ async def process_source(
     )
 
     if source_type == "website":
-        prompt = (
-            f"Please check this website source: `{url}`\n"
-            "Use browser tool to fetch its content, filter for my interests, and summarize if relevant."
-        )
+        prompt = f"Process this website source: `{url}`"
     else:
-        prompt = (
-            f"Please check this RSS feed: `{url}`\n"
-            "Use `fetch_rss_feed` to Fetch its items, filter for my interests, and summarize if relevant."
-        )
+        prompt = f"Process this RSS feed: `{url}`"
+
+    if instruction:
+        prompt = f"{prompt}\nInstructions:\n{instruction}"
 
     try:
-        events = await runner.run_debug(prompt, quiet=False)
+        events = await runner.run_debug(prompt, quiet=False, verbose=True)
         if events is None:
             events = []
 
@@ -88,22 +86,38 @@ async def process_source(
 
 
 async def run_batch(model_id: Optional[str] = None):
-    sources_path = "inputs/sources.yaml"
+    sources_path = "inputs/sources.toml"
     if not os.path.exists(sources_path):
         print(f"Sources file not found at {sources_path}")
         return
 
-    with open(sources_path, "r") as f:
-        sources_config = yaml.safe_load(f)
+    with open(sources_path, "rb") as f:
+        sources_config = tomllib.load(f)
 
     websites = sources_config.get("websites", [])
     rss_feeds = sources_config.get("rss", [])
 
-    for url in websites:
-        await process_source("website", url, model_id=model_id)
+    for item in websites:
+        if isinstance(item, str):
+            await process_source("website", item, model_id=model_id)
+        elif isinstance(item, dict) and "url" in item:
+            await process_source(
+                "website",
+                item["url"],
+                instruction=item.get("instruction"),
+                model_id=model_id,
+            )
 
-    for url in rss_feeds:
-        await process_source("rss", url, model_id=model_id)
+    for item in rss_feeds:
+        if isinstance(item, str):
+            await process_source("rss", item, model_id=model_id)
+        elif isinstance(item, dict) and "url" in item:
+            await process_source(
+                "rss",
+                item["url"],
+                instruction=item.get("instruction"),
+                model_id=model_id,
+            )
 
 
 @app.command()
