@@ -16,11 +16,11 @@ uv sync
 Run the curator:
 
 ```bash
-# Run batch processing
-uv run main.py run
+# Run batch processing (fetch)
+uv run src/main.py fetch
 
-# Run with specific model
-uv run main.py run --model gemini-2.0-flash
+# Run summary generation
+uv run src/main.py summarize
 ```
 
 ## Configuration

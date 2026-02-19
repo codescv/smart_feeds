@@ -4,8 +4,8 @@ import os
 import tomllib
 import asyncio
 from dotenv import load_dotenv
-from src.tools.mcp_browser import configure_browser_session
-from src.agent import create_fetcher_agent, create_summarizer_agent
+from tools.mcp_browser import configure_browser_session
+from agents.agent import create_fetcher_agent, create_summarizer_agent
 from google.adk.runners import Runner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
 
@@ -71,6 +71,7 @@ async def process_source(
 
 
 async def run_fetch_batch(model_id: Optional[str] = None):
+    # Assuming running from project root
     sources_path = "inputs/sources.toml"
     if not os.path.exists(sources_path):
         print(f"Sources file not found at {sources_path}")

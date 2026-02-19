@@ -1,9 +1,9 @@
 from typing import Optional
 import os
 from google.adk.agents import Agent
-from src.tools.mcp_browser import get_browser_toolset
-from src.tools.rss import fetch_rss_feed
-from src.tools.storage import append_to_details_log, read_daily_details, save_daily_summary
+from tools.mcp_browser import get_browser_toolset
+from tools.rss import fetch_rss_feed
+from tools.storage import append_to_details_log, read_daily_details, save_daily_summary
 
 
 def create_fetcher_agent(model_id=None, user_data_dir: Optional[str] = None):
@@ -22,6 +22,7 @@ def create_fetcher_agent(model_id=None, user_data_dir: Optional[str] = None):
             user_data_dir = None
 
     # Load interests
+    # Assuming running from project root
     interests_path = "inputs/interests.md"
     interests_content = "No specific interests provided."
     if os.path.exists(interests_path):
