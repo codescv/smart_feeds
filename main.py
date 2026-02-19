@@ -5,7 +5,7 @@ import tomllib
 import asyncio
 from dotenv import load_dotenv
 from src.tools.mcp_browser import configure_browser_session
-from src.agent import create_agent
+from src.agent import create_fetcher_agent, create_summarizer_agent
 from google.adk.runners import Runner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
 
@@ -41,11 +41,11 @@ async def process_source(
     model_id: Optional[str] = None,
 ):
     """
-    Runs the agent for a single source.
+    Runs the fetcher agent for a single source.
     """
     print(f"\n>>> Processing {source_type}: {url}")
 
-    agent = create_agent(model_id=model_id)
+    agent = create_fetcher_agent(model_id=model_id)
     runner = Runner(
         agent=agent, app_name="smart-feeds", session_service=InMemorySessionService()
     )
@@ -60,32 +60,17 @@ async def process_source(
 
     try:
         events = await runner.run_debug(prompt, quiet=False, verbose=True)
+        # We don't necessarily need to print the output as it's saved to the log, 
+        # but showing the agent's thought process is helpful for debug.
         if events is None:
-            events = []
-
-        # Find the last response from the agent
-        final_response = None
-        if events:
-            print(events)
-            for event in reversed(events):
-                if event.author == agent.name and event.content:
-                    if event.content.parts:
-                        text_parts = [p.text for p in event.content.parts if p.text]
-                        if text_parts:
-                            final_response = "".join(text_parts)
-                            break
-
-        if final_response:
-            print(f"Agent:\n{final_response}")
-        else:
-            print("Agent finished (no text response).")
+            print("No events returned.")
 
     except Exception as e:
         logger.error(f"Error processing {url}: {e}")
         print(f"Error: {e}")
 
 
-async def run_batch(model_id: Optional[str] = None):
+async def run_fetch_batch(model_id: Optional[str] = None):
     sources_path = "inputs/sources.toml"
     if not os.path.exists(sources_path):
         print(f"Sources file not found at {sources_path}")
@@ -120,6 +105,49 @@ async def run_batch(model_id: Optional[str] = None):
             )
 
 
+async def run_summarize(model_id: Optional[str] = None):
+    print("\n>>> Starting Daily Summary Generation")
+    agent = create_summarizer_agent(model_id=model_id)
+    runner = Runner(
+        agent=agent, app_name="smart-feeds", session_service=InMemorySessionService()
+    )
+    
+    prompt = "Please read the daily details and generate the daily news summary."
+    
+    try:
+        await runner.run_debug(prompt, quiet=False, verbose=True)
+        print("Summary generation complete.")
+    except Exception as e:
+        logger.error(f"Error generating summary: {e}")
+        print(f"Error: {e}")
+
+
+@app.command()
+def fetch(
+    model: Optional[str] = typer.Option(
+        None, help="Model ID to use (e.g., gemini-2.0-flash)"
+    ),
+):
+    """
+    Fetches content from configured sources and saves details.
+    """
+    print("Starting Smart Feeds content fetch...")
+    asyncio.run(run_fetch_batch(model_id=model))
+    print("Fetch complete.")
+
+
+@app.command()
+def summarize(
+    model: Optional[str] = typer.Option(
+        None, help="Model ID to use (e.g., gemini-2.0-flash)"
+    ),
+):
+    """
+    Generates a daily news summary from fetched details.
+    """
+    asyncio.run(run_summarize(model_id=model))
+
+
 @app.command()
 def run(
     model: Optional[str] = typer.Option(
@@ -127,18 +155,17 @@ def run(
     ),
 ):
     """
-    Runs the Smart Feeds agent to curate content from configured sources.
+    DEPRECATED: Use 'fetch' instead. kept for backward compatibility.
     """
-    print("Starting Smart Feeds curation run...")
-    asyncio.run(run_batch(model_id=model))
-    print("Run complete.")
+    print("Warning: 'run' is deprecated. Please use 'fetch' or 'summarize'. Running 'fetch'...")
+    asyncio.run(run_fetch_batch(model_id=model))
 
 
 async def run_chat_loop(model_id: Optional[str] = None):
     print("Starting interactive chat mode (Debug)...")
     print("Type 'exit' to quit.")
 
-    agent = create_agent(model_id=model_id)
+    agent = create_fetcher_agent(model_id=model_id)
     runner = Runner(
         agent=agent, app_name="smart-feeds", session_service=InMemorySessionService()
     )

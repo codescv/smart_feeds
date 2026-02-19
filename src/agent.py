@@ -3,18 +3,17 @@ import os
 from google.adk.agents import Agent
 from src.tools.mcp_browser import get_browser_toolset
 from src.tools.rss import fetch_rss_feed
-from src.tools.storage import append_daily_log
+from src.tools.storage import append_to_details_log, read_daily_details, save_daily_summary
 
 
-def create_agent(model_id=None, user_data_dir: Optional[str] = None):
+def create_fetcher_agent(model_id=None, user_data_dir: Optional[str] = None):
     """
-    Creates and configures the Smart Feeds agent.
+    Creates the Fetcher Agent.
+    Goal: Fetch content, filter it, and append details to the daily log.
     """
     if model_id is None:
         model_id = os.getenv("MODEL_ID", "gemini-2.0-flash")
     
-    output_language = os.getenv("OUTPUT_LANGUAGE", "English")
-
     if user_data_dir is None:
         user_data_dir = os.getenv("BROWSER_USER_DATA_DIR")
         if user_data_dir == "":
@@ -28,10 +27,10 @@ def create_agent(model_id=None, user_data_dir: Optional[str] = None):
             interests_content = f.read()
 
     # Initialize browser toolset
-    browser_toolset = get_browser_toolset(user_data_dir=user_data_dir, headless=False)
+    browser_toolset = get_browser_toolset(user_data_dir=user_data_dir, headless=True)
 
     instruction = f"""
-    You are a personal content curator agent. Your goal is to help the user manage information overload.
+    You are a Content Fetcher Agent.
     
     You have access to the user's interests:
     {interests_content}
@@ -39,22 +38,76 @@ def create_agent(model_id=None, user_data_dir: Optional[str] = None):
     You will be given a source (URL or RSS feed) and instructions for how to fetch the content.
     Your workflow is:
     1. FETCH: Fetch the content according to the instructions.
-       - For websites: Use the available browser tools (e.g., `navigate` to the URL). You may need to use `screenshot` or `evaluate` to inspect content if needed, but primarily get the text content.
+       - For websites: Use the available browser tools (e.g., `navigate` to the URL). 
        - For RSS: Use `fetch_rss_feed`.
     2. ANALYZE: Analyze the content against the user's interests.
-    3. FILTER: If the content matches the user's dislikes, IGNORE it.
-    4. SUMMARIZE: If the content is relevant, create a concise summary.
-    5. SAVE: Use `append_daily_log` to save the summary to the daily log.
+    3. FILTER: If the content matches the user's dislikes or is irrelevant, IGNORE it.
+    4. EXTRACT: If the content is relevant, extract key details for EACH item.
+    5. SAVE: Use `append_to_details_log` to save the extracted items to the daily details log.
+    
+    IMPORTANT: `append_to_details_log` accepts a LIST of dictionaries.
+    Each item in the list must have:
+    - `title`: The title of the item.
+    - `url`: The link to the item (CRITICAL for deduplication).
+    - `source`: The name of the source (e.g. "Hacker News", "Twitter").
+    - `relevance`: Why it matches interests.
+    - `summary`: A brief summary of the content.
+    
+    Example usage:
+    ```python
+    items = [
+        {{"title": "Example Title", "url": "https://example.com/1", "source": "Example", "relevance": "AI news", "summary": "..."}},
+        {{"title": "Another Title", "url": "https://example.com/2", "source": "Example", "relevance": "Tech", "summary": "..."}}
+    ]
+    append_to_details_log(items)
+    ```
+    
+    Be efficient. Do not save "noise".
+    """
+
+    agent = Agent(
+        name="fetcher_agent",
+        model=model_id,
+        instruction=instruction,
+        tools=[browser_toolset, fetch_rss_feed, append_to_details_log],
+    )
+
+    return agent
+
+
+def create_summarizer_agent(model_id=None):
+    """
+    Creates the Summarizer Agent.
+    Goal: Read daily details and generate a curated daily newspaper.
+    """
+    if model_id is None:
+        model_id = os.getenv("MODEL_ID", "gemini-2.0-flash")
+        
+    output_language = os.getenv("OUTPUT_LANGUAGE", "English")
+
+    instruction = f"""
+    You are a Daily News Editor Agent.
+    
+    Your goal is to read the raw details collected by the Fetcher Agent and compile a clean, organized Daily News Digest.
+    
+    Your workflow:
+    1. READ: Use `read_daily_details` to get all the items collected today.
+    2. ORGANIZE: Group items by topic.
+    3. SUMMARIZE: Create a cohesive narrative or list for each topic.
+    4. OUTPUT: Generate the final markdown content.
+    5. SAVE: Use `save_daily_summary` to save the final digest.
     
     # Output format
     The output should be in markdown format.
     Unless otherwise specified, the output should be grouped into sections, 
     with each section containing a summary of relevant content.
     Multiple similar items can be placed under the same summarized item.
-    Each summarized item should contain the orginal link for easy reference.
+    Each summarized item should contain the original link for easy reference.
 
     Example:
-    ```
+    ```markdown
+    # Daily News - [Date]
+
     ## Topic 1
     [Summary of topic 1...]
     - [Summary Content] [Title1](Link1) [Title2](Link2)
@@ -67,16 +120,14 @@ def create_agent(model_id=None, user_data_dir: Optional[str] = None):
     (Add a few words about what messages are filtered and why)
     ```
     
-    IMPORTANT: Both the summary saved to the daily log AND your final response MUST be in {output_language}.
-    
-    Be efficient. Do not save content that is not interesting.
+    IMPORTANT: The final summary MUST be in {output_language}.
     """
 
     agent = Agent(
-        name="content_curator",
+        name="summarizer_agent",
         model=model_id,
         instruction=instruction,
-        tools=[browser_toolset, fetch_rss_feed, append_daily_log],
+        tools=[read_daily_details, save_daily_summary],
     )
 
     return agent
