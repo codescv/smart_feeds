@@ -8,12 +8,13 @@ from google.adk.tools import McpToolset
 from google.adk.agents import Agent
 from google.adk.runners import Runner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
+from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
 from mcp import StdioServerParameters
 
 logger = logging.getLogger(__name__)
 
 # Constants
-DEFAULT_USER_DATA_DIR = os.path.abspath("inputs/browser_data")
+DEFAULT_USER_DATA_DIR = os.path.abspath("inputs/browser")
 
 
 def _get_mcp_args(headless: bool, user_data_dir: Optional[str] = None) -> List[str]:
@@ -54,9 +55,12 @@ def get_browser_toolset(
     logger.info(f"Initializing Playwright MCP with args: {args}")
 
     return McpToolset(
-        connection_params=StdioServerParameters(
-            command="npx",
-            args=args,
+        connection_params=StdioConnectionParams(
+            server_params=StdioServerParameters(
+                command="npx",
+                args=args,
+            ),
+            timeout=60.0,
         )
     )
 
