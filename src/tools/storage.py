@@ -10,9 +10,9 @@ def _get_details_path() -> str:
 
 
 def _get_summary_path() -> str:
-    """Returns the path for today's daily news summary."""
+    """Returns the path for today's daily news summary (TLDR)."""
     today = datetime.date.today().isoformat()
-    return f"data/daily_news/{today}.md"
+    return f"data/tldr/{today}.md"
 
 
 import re

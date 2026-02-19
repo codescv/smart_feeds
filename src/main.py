@@ -39,13 +39,14 @@ async def process_source(
     url: str,
     instruction: Optional[str] = None,
     model_id: Optional[str] = None,
+    debug: bool = False,
 ):
     """
     Runs the fetcher agent for a single source.
     """
     print(f"\n>>> Processing {source_type}: {url}")
 
-    agent = create_fetcher_agent(model_id=model_id)
+    agent = create_fetcher_agent(model_id=model_id, debug=debug)
     runner = Runner(
         agent=agent, app_name="smart-feeds", session_service=InMemorySessionService()
     )
@@ -59,6 +60,7 @@ async def process_source(
         prompt = f"{prompt}\nInstructions:\n{instruction}"
 
     try:
+        # If debug is True, we might want verbose logging or visible browser (handled in agent)
         events = await runner.run_debug(prompt, quiet=False, verbose=True)
         # We don't necessarily need to print the output as it's saved to the log, 
         # but showing the agent's thought process is helpful for debug.
@@ -70,7 +72,7 @@ async def process_source(
         print(f"Error: {e}")
 
 
-async def run_fetch_batch(model_id: Optional[str] = None):
+async def run_fetch_batch(model_id: Optional[str] = None, debug: bool = False):
     # Assuming running from project root
     sources_path = "inputs/sources.toml"
     if not os.path.exists(sources_path):
@@ -85,39 +87,49 @@ async def run_fetch_batch(model_id: Optional[str] = None):
 
     for item in websites:
         if isinstance(item, str):
-            await process_source("website", item, model_id=model_id)
+            await process_source("website", item, model_id=model_id, debug=debug)
         elif isinstance(item, dict) and "url" in item:
+            if not item.get("enabled", True):
+                print(f"Skipping disabled source: {item['url']}")
+                continue
             await process_source(
                 "website",
                 item["url"],
                 instruction=item.get("instruction"),
                 model_id=model_id,
+                debug=debug,
             )
 
     for item in rss_feeds:
         if isinstance(item, str):
-            await process_source("rss", item, model_id=model_id)
+            await process_source("rss", item, model_id=model_id, debug=debug)
         elif isinstance(item, dict) and "url" in item:
+            if not item.get("enabled", True):
+                print(f"Skipping disabled source: {item['url']}")
+                continue
             await process_source(
                 "rss",
                 item["url"],
                 instruction=item.get("instruction"),
                 model_id=model_id,
+                debug=debug,
             )
 
 
-async def run_summarize(model_id: Optional[str] = None):
-    print("\n>>> Starting Daily Summary Generation")
+async def run_summarize(model_id: Optional[str] = None, debug: bool = False):
+    print("\n>>> Starting TLDR Generation")
+    # Summarizer agent doesn't use browser, so debug specifically for browser might not affect it much,
+    # but we can pass it if we add more debug features later.
     agent = create_summarizer_agent(model_id=model_id)
     runner = Runner(
         agent=agent, app_name="smart-feeds", session_service=InMemorySessionService()
     )
     
-    prompt = "Please read the daily details and generate the daily news summary."
+    prompt = "Please read the daily details and generate the TLDR summary."
     
     try:
         await runner.run_debug(prompt, quiet=False, verbose=True)
-        print("Summary generation complete.")
+        print("TLDR generation complete.")
     except Exception as e:
         logger.error(f"Error generating summary: {e}")
         print(f"Error: {e}")
@@ -128,12 +140,15 @@ def fetch(
     model: Optional[str] = typer.Option(
         None, help="Model ID to use (e.g., gemini-2.0-flash)"
     ),
+    debug: bool = typer.Option(
+        False, help="Enable debug mode (visible browser, verbose logs)"
+    ),
 ):
     """
     Fetches content from configured sources and saves details.
     """
-    print("Starting Smart Feeds content fetch...")
-    asyncio.run(run_fetch_batch(model_id=model))
+    print(f"Starting Smart Feeds content fetch... (Debug: {debug})")
+    asyncio.run(run_fetch_batch(model_id=model, debug=debug))
     print("Fetch complete.")
 
 
@@ -142,11 +157,14 @@ def summarize(
     model: Optional[str] = typer.Option(
         None, help="Model ID to use (e.g., gemini-2.0-flash)"
     ),
+    debug: bool = typer.Option(
+        False, help="Enable debug mode (verbose logs)"
+    ),
 ):
     """
-    Generates a daily news summary from fetched details.
+    Generates a TLDR summary from fetched details.
     """
-    asyncio.run(run_summarize(model_id=model))
+    asyncio.run(run_summarize(model_id=model, debug=debug))
 
 
 @app.command()

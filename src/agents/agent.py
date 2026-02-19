@@ -6,7 +6,7 @@ from tools.rss import fetch_rss_feed
 from tools.storage import append_to_details_log, read_daily_details, save_daily_summary
 
 
-def create_fetcher_agent(model_id=None, user_data_dir: Optional[str] = None):
+def create_fetcher_agent(model_id=None, user_data_dir: Optional[str] = None, debug: bool = False):
     """
     Creates the Fetcher Agent.
     Goal: Fetch content, filter it, and append details to the daily log.
@@ -30,7 +30,8 @@ def create_fetcher_agent(model_id=None, user_data_dir: Optional[str] = None):
             interests_content = f.read()
 
     # Initialize browser toolset
-    browser_toolset = get_browser_toolset(user_data_dir=user_data_dir, headless=True)
+    # If debug is True, headless is False (browser is visible)
+    browser_toolset = get_browser_toolset(user_data_dir=user_data_dir, headless=not debug)
 
     instruction = f"""
     You are a Content Fetcher Agent.
@@ -90,9 +91,9 @@ def create_summarizer_agent(model_id=None):
     output_language = os.getenv("OUTPUT_LANGUAGE", "English")
 
     instruction = f"""
-    You are a Daily News Editor Agent.
+    You are a TLDR Editor Agent.
     
-    Your goal is to read the raw details collected by the Fetcher Agent and compile a clean, organized Daily News Digest.
+    Your goal is to read the raw details collected by the Fetcher Agent and compile a clean, organized TLDR Digest.
     
     Your workflow:
     1. READ: Use `read_daily_details` to get all the items collected today.
@@ -110,7 +111,7 @@ def create_summarizer_agent(model_id=None):
 
     Example:
     ```markdown
-    # Daily News - [Date]
+    # TLDR - [Date]
 
     ## Topic 1
     [Summary of topic 1...]
