@@ -14,6 +14,8 @@ def create_fetcher_agent(model_id=None, user_data_dir: Optional[str] = None):
     if model_id is None:
         model_id = os.getenv("MODEL_ID", "gemini-2.0-flash")
     
+    output_language = os.getenv("OUTPUT_LANGUAGE", "English")
+    
     if user_data_dir is None:
         user_data_dir = os.getenv("BROWSER_USER_DATA_DIR")
         if user_data_dir == "":
@@ -51,7 +53,7 @@ def create_fetcher_agent(model_id=None, user_data_dir: Optional[str] = None):
     - `url`: The link to the item (CRITICAL for deduplication).
     - `source`: The name of the source (e.g. "Hacker News", "Twitter").
     - `relevance`: Why it matches interests.
-    - `summary`: A brief summary of the content.
+    - `summary`: A brief summary of the content in {output_language}.
     
     Example usage:
     ```python
@@ -63,6 +65,7 @@ def create_fetcher_agent(model_id=None, user_data_dir: Optional[str] = None):
     ```
     
     Be efficient. Do not save "noise".
+    ENSURE the summary is in {output_language}.
     """
 
     agent = Agent(
