@@ -12,6 +12,13 @@ def create_agent(model_id=None, user_data_dir: Optional[str] = None):
     """
     if model_id is None:
         model_id = os.getenv("MODEL_ID", "gemini-2.0-flash")
+    
+    output_language = os.getenv("OUTPUT_LANGUAGE", "English")
+
+    if user_data_dir is None:
+        user_data_dir = os.getenv("BROWSER_USER_DATA_DIR")
+        if user_data_dir == "":
+            user_data_dir = None
 
     # Load interests
     interests_path = "inputs/interests.md"
@@ -44,6 +51,8 @@ def create_agent(model_id=None, user_data_dir: Optional[str] = None):
     **Source:** [Source Name]
     **Summary:** [Your summary]
     **Relevance:** [Why this matches user interests]
+    
+    IMPORTANT: Both the summary saved to the daily log AND your final response MUST be in {output_language}.
     
     Be efficient. Do not save content that is not interesting.
     """
