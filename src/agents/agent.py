@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List, Callable, Any
 import os
 from google.adk.agents import Agent
 from tools.mcp_browser import get_browser_toolset
@@ -6,7 +6,12 @@ from tools.rss import fetch_rss_feed
 from tools.storage import append_to_details_log, read_daily_details, save_daily_summary
 
 
-def create_fetcher_agent(model_id=None, user_data_dir: Optional[str] = None, debug: bool = False):
+def create_fetcher_agent(
+    model_id=None,
+    tools: Optional[List[Any]] = None,
+    source_type: str = "general",
+    extra_instruction: str = "",
+):
     """
     Creates the Fetcher Agent.
     Goal: Fetch content, filter it, and append details to the daily log.
@@ -16,11 +21,6 @@ def create_fetcher_agent(model_id=None, user_data_dir: Optional[str] = None, deb
     
     output_language = os.getenv("OUTPUT_LANGUAGE", "English")
     
-    if user_data_dir is None:
-        user_data_dir = os.getenv("BROWSER_USER_DATA_DIR")
-        if user_data_dir == "":
-            user_data_dir = None
-
     # Load interests
     # Assuming running from project root
     interests_path = "inputs/interests.md"
@@ -29,21 +29,15 @@ def create_fetcher_agent(model_id=None, user_data_dir: Optional[str] = None, deb
         with open(interests_path, "r") as f:
             interests_content = f.read()
 
-    # Initialize browser toolset
-    # If debug is True, headless is False (browser is visible)
-    browser_toolset = get_browser_toolset(user_data_dir=user_data_dir, headless=not debug)
-
     instruction = f"""
-    You are a Content Fetcher Agent.
+    You are a Content Fetcher Agent defined for source type: {source_type}.
     
     You have access to the user's interests:
     {interests_content}
     
     You will be given a source (URL or RSS feed) and instructions for how to fetch the content.
     Your workflow is:
-    1. FETCH: Fetch the content according to the instructions.
-       - For websites: Use the available browser tools (e.g., `navigate` to the URL). 
-       - For RSS: Use `fetch_rss_feed`.
+    1. FETCH: Fetch the content using the provided tools.
     2. ANALYZE: Analyze the content against the user's interests.
     3. FILTER: If the content matches the user's dislikes or is irrelevant, IGNORE it.
     4. EXTRACT: If the content is relevant, extract key details for EACH item.
@@ -68,13 +62,16 @@ def create_fetcher_agent(model_id=None, user_data_dir: Optional[str] = None, deb
     
     Be efficient. Do not save "noise".
     ENSURE the summary is in {output_language}.
+    
+    Specific Instructions for this source:
+    {extra_instruction}
     """
 
     agent = Agent(
         name="fetcher_agent",
         model=model_id,
         instruction=instruction,
-        tools=[browser_toolset, fetch_rss_feed, append_to_details_log],
+        tools=tools if tools else [],
     )
 
     return agent
@@ -108,11 +105,11 @@ def create_summarizer_agent(model_id=None):
     with each section containing a summary of relevant content.
     Multiple similar items can be placed under the same summarized item.
     Each summarized item should contain the original link for easy reference.
-
+    
     Example:
     ```markdown
     # TLDR - [Date]
-
+    
     ## Topic 1
     [Summary of topic 1...]
     - [Summary Content] [Title1](Link1) [Title2](Link2)
@@ -121,7 +118,7 @@ def create_summarizer_agent(model_id=None):
     ## Topic 2
     [Summary of topic 2...]
     - [Summary Content...] [Title4](Link4)
-
+    
     (Add a few words about what messages are filtered and why)
     ```
     
