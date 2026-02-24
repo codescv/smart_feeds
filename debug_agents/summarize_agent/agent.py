@@ -10,7 +10,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from agents.agent import create_summarizer_agent
+from agents.summarizer_agent import create_summarizer_agent
 
 # Initialize the agent instance required by adk web
 # We can pass specific model_id or other params if needed

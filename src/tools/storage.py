@@ -85,21 +85,27 @@ def _append_to_log(items: List[Dict[str, str]], filename: str) -> str:
 
         # Format item as markdown
         title = item.get("title", "No Title")
-        source = item.get("source", "Unknown Source")
-        published = item.get("published", "Unknown Date")
+        # url is already extracted above
         
-        # Optional fields might vary between raw and curated
-        summary = item.get("summary", "No summary provided.")
-        relevance = item.get("relevance") # Only for curated
+        block = f"## [{title}]({url})\n"
         
-        block = f"## [{title}]({url})\n" \
-                f"**Source:** {source}\n" \
-                f"**Published:** {published}\n"
+        exclude_keys = {"title", "url"}
         
-        if relevance:
-            block += f"**Relevance:** {relevance}\n"
-            
-        block += f"**Summary:** {summary}\n"
+        # Sort keys for consistent output, or just use iteration order?
+        # Standard dict iteration order is insertion order (since Python 3.7).
+        # But sorting by key is safer for diffs/consistency if insertion order varies.
+        sorted_keys = sorted(item.keys())
+        
+        for key in sorted_keys:
+            if key in exclude_keys:
+                continue
+            val = item[key]
+            if val is not None and val != "":
+                label = key.replace("_", " ").title()
+                # Handle lists or dicts? For now assume strings as per docstring hints.
+                # If value is complex, maybe stringify it nicely?
+                # But existing code assumed str.
+                block += f"**{label}:** {val}\n"
         
         new_content_blocks.append(block)
         existing_urls.add(url) # Add to set to prevent duplicates within the same batch

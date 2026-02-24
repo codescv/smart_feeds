@@ -57,36 +57,11 @@ async def process_source(
     
     print(f"\n>>> Processing [{source_type}]: {url}")
 
-    tools: List[Any] = [append_to_raw_log]
-    
-    # Select tools based on type
-    if source_type == "browser":
-        user_data_dir = os.getenv("BROWSER_USER_DATA_DIR")
-        if user_data_dir == "":
-            user_data_dir = None
-        # If debug is True, headless is False (browser is visible)
-        browser_toolset = get_browser_toolset(user_data_dir=user_data_dir, headless=not debug)
-        tools.append(browser_toolset)
-        
-    elif source_type == "http":
-        tools.append(fetch_website_content)
-        
-    elif source_type == "rss_text":
-        tools.append(fetch_rss_feed)
-        
-    elif source_type == "rss_audio":
-        tools.append(fetch_rss_feed)
-        tools.append(transcribe_audio_url)
-        
-    else:
-        print(f"Unknown source type: {source_type}. Skipping.")
-        return
-
+    # Manual tool selection is now handled by create_fetcher_agent
     agent = create_fetcher_agent(
         model_id=model_id,
-        tools=tools,
         source_type=source_type,
-        extra_instruction=instruction
+        debug=debug
     )
     
     runner = Runner(
@@ -94,8 +69,8 @@ async def process_source(
     )
 
     prompt = f"Process this source: `{url}`"
-    if source_type == "rss_audio":
-        prompt += "\nThis is an audio RSS feed. Fetch the feed, find the latest audio links, transcribe them, and generate a summary."
+    if instruction:
+        prompt += f"\n\nHigh-level Instruction: {instruction}"
 
     try:
         # If debug is True, we might want verbose logging

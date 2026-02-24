@@ -10,8 +10,8 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from agents.agent import create_fetcher_agent
+from agents.fetcher_agent import create_fetcher_agent
 
 # Initialize the agent instance required by adk web
 # We can pass specific model_id or other params if needed
-root_agent = create_fetcher_agent()
+root_agent = create_fetcher_agent(source_type="browser", debug=True)
