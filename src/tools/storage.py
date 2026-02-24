@@ -15,8 +15,20 @@ def _get_summary_path() -> str:
     return f"data/tldr/{today}.md"
 
 
+def _get_raw_path() -> str:
+    """Returns the path for today's raw collected items."""
+    today = datetime.date.today().isoformat()
+    return f"data/all/{today}.md"
+
+
+def _get_curated_path() -> str:
+    """Returns the path for today's curated items."""
+    today = datetime.date.today().isoformat()
+    return f"data/curated/{today}.md"
+
+
 import re
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Optional
 
 def _extract_urls_from_markdown(content: str) -> Set[str]:
     """
@@ -33,18 +45,11 @@ def _extract_urls_from_markdown(content: str) -> Set[str]:
     return urls
 
 
-def append_to_details_log(items: List[Dict[str, str]]):
+def _append_to_log(items: List[Dict[str, str]], filename: str) -> str:
     """
-    Appends the given list of items to the daily details markdown log file.
-    The file is named YYYY-MM-DD.md and located in the data/details/ directory.
-    Performs robust deduplication by checking if the URL is already present in the file.
-    
-    Args:
-        items: List of dictionaries, each containing 'url', 'title', 'source', 'relevance', 'summary'.
+    Generic function to append items to a markdown log file with deduplication.
     """
-    filename = _get_details_path()
-
-    # Ensure details directory exists
+    # Ensure directory exists
     os.makedirs(os.path.dirname(filename), exist_ok=True)
 
     existing_content = ""
@@ -81,13 +86,20 @@ def append_to_details_log(items: List[Dict[str, str]]):
         # Format item as markdown
         title = item.get("title", "No Title")
         source = item.get("source", "Unknown Source")
-        relevance = item.get("relevance", "N/A")
+        published = item.get("published", "Unknown Date")
+        
+        # Optional fields might vary between raw and curated
         summary = item.get("summary", "No summary provided.")
+        relevance = item.get("relevance") # Only for curated
         
         block = f"## [{title}]({url})\n" \
                 f"**Source:** {source}\n" \
-                f"**Relevance:** {relevance}\n" \
-                f"**Summary:** {summary}\n"
+                f"**Published:** {published}\n"
+        
+        if relevance:
+            block += f"**Relevance:** {relevance}\n"
+            
+        block += f"**Summary:** {summary}\n"
         
         new_content_blocks.append(block)
         existing_urls.add(url) # Add to set to prevent duplicates within the same batch
@@ -99,19 +111,54 @@ def append_to_details_log(items: List[Dict[str, str]]):
     with open(filename, "a", encoding="utf-8") as f:
         f.write("\n".join(new_content_blocks) + "\n\n")
 
-    return f"Appended {added_count} new items. Skipped {skipped_count} duplicates."
+    return f"Appended {added_count} new items to {filename}. Skipped {skipped_count} duplicates."
+
+
+def append_to_raw_log(items: List[Dict[str, str]]):
+    """
+    Appends items to the raw log (data/all/YYYY-MM-DD.md).
+    """
+    return _append_to_log(items, _get_raw_path())
+
+
+def append_to_curated_log(items: List[Dict[str, str]]):
+    """
+    Appends filtered/curated items to the curated log (data/curated/YYYY-MM-DD.md).
+    """
+    return _append_to_log(items, _get_curated_path())
+
+
+def append_to_details_log(items: List[Dict[str, str]]):
+    """
+    DEPRECATED: Use append_to_curated_log instead.
+    Kept for backward compatibility during refactor.
+    """
+    return append_to_curated_log(items)
+
+
+def read_raw_log() -> str:
+    """Reads content of today's raw log."""
+    filename = _get_raw_path()
+    if not os.path.exists(filename):
+        return "No raw items found for today."
+    with open(filename, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+def read_curated_log() -> str:
+    """Reads content of today's curated log."""
+    filename = _get_curated_path()
+    if not os.path.exists(filename):
+        return "No curated items found for today."
+    with open(filename, "r", encoding="utf-8") as f:
+        return f.read()
 
 
 def read_daily_details() -> str:
     """
-    Reads the content of today's details log.
+    DEPRECATED: Use read_curated_log instead.
     """
-    filename = _get_details_path()
-    if not os.path.exists(filename):
-        return "No details found for today."
-    
-    with open(filename, "r", encoding="utf-8") as f:
-        return f.read()
+    return read_curated_log()
 
 
 def save_daily_summary(content: str):
