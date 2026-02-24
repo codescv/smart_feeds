@@ -31,6 +31,8 @@ def create_fetcher_agent(
     You will be given a source (URL or RSS feed) and instructions for how to fetch the content.
     Your workflow is:
     1. FETCH: Fetch the content using the provided tools.
+        - If the source type is `browser`, you should be able to scroll down to get more items if there are not enough.
+        - For x posts, if it's a repost, you should get the content for the original post as well.
     2. EXTRACT: Extract key details for EACH item found.
        - AVOID filtering based on topic/interest. Your job is to capture EVERYTHING potentially useful from this source.
        - Exception: Explicitly exclude ads, spam, or navigation links.

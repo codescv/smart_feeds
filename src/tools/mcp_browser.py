@@ -60,7 +60,7 @@ def get_browser_toolset(
                 command="npx",
                 args=args,
             ),
-            timeout=60.0,
+            timeout=600.0,
         )
     )
 
