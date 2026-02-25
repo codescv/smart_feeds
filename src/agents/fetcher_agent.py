@@ -48,6 +48,11 @@ def create_fetcher_agent(
     if append_to_raw_log.__name__ not in tool_names:
         tools.append(append_to_raw_log)
 
+    # deduplicate_items tool
+    from tools.dedup import deduplicate_items
+    if deduplicate_items not in tools:
+        tools.append(deduplicate_items)
+
     browser_close_instruction = ""
     if source_type == "browser":
         browser_close_instruction = (
@@ -63,7 +68,10 @@ def create_fetcher_agent(
     2. EXTRACT: Extract key details for EACH item found.
        - AVOID filtering based on topic/interest. Your job is to capture EVERYTHING potentially useful from this source.
        - Exception: Explicitly exclude ads, spam, or navigation links.
-    3. SAVE: Use `append_to_raw_log` to save the extracted items to the raw log.
+    3. DEDUP: Use `deduplicate_items` filter out items that have already been fetched.
+       - Pass the extracted list of items to `deduplicate_items`.
+       - It will return a filtered list of NEW items.
+    4. SAVE: Use `append_to_raw_log` to save the FILTERED items to the raw log.
     {browser_close_instruction}
     
     IMPORTANT: `append_to_raw_log` accepts a LIST of dictionaries.

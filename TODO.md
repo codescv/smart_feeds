@@ -7,7 +7,7 @@
 - [ ] Add a orchestrate agent for the 3 agents.
 - [ ] Add a main script `smart-feeds` in `pyproject.toml`.
 - [x] Move "special instruction" out of `create_agent`
-- [ ] Add dedup function for the Fetch Agent.
+- [x] Add dedup function for the Fetch Agent.
 - [ ] Add a `auto label` feature to add tags etc to items.
 - [x] Append raw log is dropping columns
 - [x] x fetch is ignoring orgininal item.
