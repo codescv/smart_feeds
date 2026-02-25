@@ -206,5 +206,35 @@ def summarize(
     """
     asyncio.run(run_summarize(model_id=model, debug=debug))
 
+
+@app.command()
+def run_all(
+    model: Optional[str] = typer.Option(
+        None, help="Model ID to use (e.g., gemini-2.0-flash)"
+    ),
+    debug: bool = typer.Option(
+        False, help="Enable debug mode (verbose logs)"
+    ),
+):
+    """
+    Runs the entire pipeline: Fetch -> Curate -> Summarize.
+    """
+    print(f"Starting Smart Feeds Pipeline... (Debug: {debug})")
+
+    # 1. Fetch
+    print(">>> Stage 1: Fetching content...")
+    asyncio.run(run_fetch_batch(model_id=model, debug=debug))
+    print("Fetch complete.")
+
+    # 2. Curate
+    # run_curate already prints start/end messages
+    asyncio.run(run_curate(model_id=model, debug=debug))
+
+    # 3. Summarize
+    # run_summarize already prints start/end messages
+    asyncio.run(run_summarize(model_id=model, debug=debug))
+
+    print("Pipeline complete.")
+
 if __name__ == "__main__":
     app()

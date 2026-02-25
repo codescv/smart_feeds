@@ -3,12 +3,10 @@
 - [x] Add an `enabled` field to sources.toml to allow enabling/disabling sources.
 - [x] Implement RSS feeds. 
 - [x] Implement RSS feeds for audio podcasts.
-- [ ] Add update strategy (e.g. last x days / the latest x items) for data sources.
-- [ ] Add a orchestrate agent for the 3 agents.
-- [ ] Add a main script `smart-feeds` in `pyproject.toml`.
 - [x] Move "special instruction" out of `create_agent`
 - [x] Add dedup function for the Fetch Agent.
-- [ ] Add a `auto label` feature to add tags etc to items.
 - [x] Append raw log is dropping columns
 - [x] x fetch is ignoring orgininal item.
+- [x] Add a run-all command
 - [ ] cronjob installing command
+- [ ] Add a deep dive command
