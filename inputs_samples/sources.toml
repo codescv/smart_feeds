@@ -1,0 +1,45 @@
+# Data Sources Configuration
+
+# Browser-based sources (Playwright)
+# Best for: X.com (Twitter), dynamic JS sites, complex logins.
+[[source]]
+url = "https://x.com/home"
+enabled = true
+type = "browser"
+instruction = """
+抓取的页面
+  - For you (50条最新)
+  - Following (50条最新)
+  - Today's News (抓取标题和链接)
+  - What's happening (抓取标题和链接)
+"""
+
+# Customizable API examples (Use 'browser' for X.com/Reddit if APIs are paid/limited)
+# [[source]]
+# url = "https://x.com/someuser"
+# enabled = false
+# type = "browser"
+# instruction = "Scrape the latest tweets from this user."
+
+# HTTP-based sources (BeautifulSoup)
+# Best for: Static websites, blogs without RSS.
+[[source]]
+url = "https://news.ycombinator.com"
+enabled = false
+type = "http"
+instruction = "Extract the top 30 items with titles and links."
+
+# RSS Text sources
+# Best for: Reddit, Substack, Blogs.
+# Reddit: Add .rss to any subreddit URL (e.g., https://www.reddit.com/r/LocalLLaMA.rss)
+[[source]]
+url = "https://www.reddit.com/r/LocalLLaMA.rss"
+enabled = false
+type = "rss_text"
+
+# RSS Audio sources (Podcasts)
+# Best for: Podcasts (requires transcription).
+[[source]]
+url = "https://feed.xyzfm.space/..."
+enabled = false
+type = "rss_audio"

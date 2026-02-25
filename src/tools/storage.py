@@ -1,30 +1,31 @@
 import os
 import datetime
+import config
 
 
 
 def _get_details_path() -> str:
     """Returns the path for today's details log."""
     today = datetime.date.today().isoformat()
-    return f"data/details/{today}.md"
+    return os.path.join(config.get_output_dir(), "details", f"{today}.md")
 
 
 def _get_summary_path() -> str:
     """Returns the path for today's daily news summary (TLDR)."""
     today = datetime.date.today().isoformat()
-    return f"data/tldr/{today}.md"
+    return os.path.join(config.get_output_dir(), "tldr", f"{today}.md")
 
 
 def _get_raw_path() -> str:
     """Returns the path for today's raw collected items."""
     today = datetime.date.today().isoformat()
-    return f"data/all/{today}.md"
+    return os.path.join(config.get_output_dir(), "all", f"{today}.md")
 
 
 def _get_curated_path() -> str:
     """Returns the path for today's curated items."""
     today = datetime.date.today().isoformat()
-    return f"data/curated/{today}.md"
+    return os.path.join(config.get_output_dir(), "curated", f"{today}.md")
 
 
 import re
@@ -122,14 +123,14 @@ def _append_to_log(items: List[Dict[str, str]], filename: str) -> str:
 
 def append_to_raw_log(items: List[Dict[str, str]]):
     """
-    Appends items to the raw log (data/all/YYYY-MM-DD.md).
+    Appends items to the raw log (e.g. data/all/YYYY-MM-DD.md).
     """
     return _append_to_log(items, _get_raw_path())
 
 
 def append_to_curated_log(items: List[Dict[str, str]]):
     """
-    Appends filtered/curated items to the curated log (data/curated/YYYY-MM-DD.md).
+    Appends filtered/curated items to the curated log (e.g. data/curated/YYYY-MM-DD.md).
     """
     return _append_to_log(items, _get_curated_path())
 

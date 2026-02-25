@@ -4,6 +4,7 @@ import os
 import tomllib
 import asyncio
 from dotenv import load_dotenv
+import config
 from tools.mcp_browser import configure_browser_session, get_browser_toolset
 from tools.rss import fetch_rss_feed
 from tools.http import fetch_website_content
@@ -37,9 +38,7 @@ def configure_browser():
     """
     Launches a visible browser to configure authentication (log in to sites).
     """
-    user_data_dir = os.getenv("BROWSER_USER_DATA_DIR")
-    if user_data_dir == "":
-        user_data_dir = None
+    user_data_dir = config.get_browser_user_data_dir()
     configure_browser_session(user_data_dir=user_data_dir)
 
 
@@ -85,7 +84,7 @@ async def process_source(
 
 async def run_fetch_batch(model_id: Optional[str] = None, debug: bool = False):
     # Assuming running from project root
-    sources_path = "inputs/sources.toml"
+    sources_path = config.get_sources_config_path()
     if not os.path.exists(sources_path):
         print(f"Sources file not found at {sources_path}")
         return
@@ -171,7 +170,7 @@ def fetch(
     ),
 ):
     """
-    Stage 1: Fetches content from configured sources and saves RAW items to data/all.
+    Stage 1: Fetches content from configured sources and saves RAW items to the configured output directory.
     """
     print(f"Starting Smart Feeds content fetch... (Debug: {debug})")
     asyncio.run(run_fetch_batch(model_id=model, debug=debug))
@@ -188,7 +187,7 @@ def curate(
     ),
 ):
     """
-    Stage 2: Filters RAW items against interests and saves to data/curated.
+    Stage 2: Filters RAW items against interests and saves to the configured output directory.
     """
     asyncio.run(run_curate(model_id=model, debug=debug))
 

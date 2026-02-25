@@ -1,4 +1,5 @@
 import os
+import config
 from typing import Optional, List, Any
 from google.adk.agents import Agent
 from tools.storage import append_to_raw_log
@@ -10,9 +11,7 @@ def get_tools_for_source(source_type: str, debug: bool = False) -> List[Any]:
     if source_type == "browser":
         # Lazy import to avoid circular dependencies or unnecessary imports
         from tools.mcp_browser import get_browser_toolset
-        user_data_dir = os.getenv("BROWSER_USER_DATA_DIR")
-        if user_data_dir == "":
-            user_data_dir = None
+        user_data_dir = config.get_browser_user_data_dir()
         # If debug is True, headless is False (browser is visible)
         browser_toolset = get_browser_toolset(user_data_dir=user_data_dir, headless=not debug)
         tools.append(browser_toolset)
@@ -35,7 +34,7 @@ def create_fetcher_agent(
 ):
     """
     Creates the Fetcher Agent.
-    Goal: Fetch content from sources and save raw items to data/all.
+    Goal: Fetch content from sources and save raw items to the raw log.
     """
     if model_id is None:
         model_id = os.getenv("MODEL_ID", "gemini-2.0-flash")
@@ -49,11 +48,10 @@ def create_fetcher_agent(
     if append_to_raw_log.__name__ not in tool_names:
         tools.append(append_to_raw_log)
 
-    browser_instruction = ""
+    browser_close_instruction = ""
     if source_type == "browser":
-        browser_instruction = (
-            "*IMPORTANT*: YOU MUST scroll down using the `browser_mouse_wheel` tool with deltaY=10000"
-            "before doing anything to make sure there are enough items loaded."
+        browser_close_instruction = (
+            "*IMPORTANT*: YOU MUST close the browser using the `browser_close` tool after you are done."
         )
 
     instruction = f"""
@@ -62,11 +60,11 @@ def create_fetcher_agent(
     You will be given a source (URL or RSS feed) and instructions for how to fetch the content.
     Your workflow is:
     1. FETCH: Fetch the content using the provided tools.
-    {browser_instruction}
     2. EXTRACT: Extract key details for EACH item found.
        - AVOID filtering based on topic/interest. Your job is to capture EVERYTHING potentially useful from this source.
        - Exception: Explicitly exclude ads, spam, or navigation links.
     3. SAVE: Use `append_to_raw_log` to save the extracted items to the raw log.
+    {browser_close_instruction}
     
     IMPORTANT: `append_to_raw_log` accepts a LIST of dictionaries.
     Each item in the list must have:

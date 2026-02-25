@@ -1,11 +1,12 @@
 import os
+import config
 from google.adk.agents import Agent
 from tools.storage import read_raw_log, append_to_curated_log
 
 def create_curator_agent(model_id=None):
     """
     Creates the Curator Agent.
-    Goal: Read raw items, filter by user interest, and save to data/curated.
+    Goal: Read raw items, filter by user interest, and save to the curated log.
     """
     if model_id is None:
         model_id = os.getenv("MODEL_ID", "gemini-2.0-flash")
@@ -14,7 +15,7 @@ def create_curator_agent(model_id=None):
 
     # Load interests
     # Assuming running from project root
-    interests_path = "inputs/interests.md"
+    interests_path = os.path.join(config.get_input_dir(), "interests.md")
     interests_content = "No specific interests provided."
     if os.path.exists(interests_path):
         with open(interests_path, "r") as f:

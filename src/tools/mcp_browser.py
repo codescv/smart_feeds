@@ -1,4 +1,5 @@
 import os
+import config
 import logging
 import asyncio
 import subprocess
@@ -12,9 +13,6 @@ from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
 from mcp import StdioServerParameters
 
 logger = logging.getLogger(__name__)
-
-# Constants
-DEFAULT_USER_DATA_DIR = os.path.abspath("inputs/browser")
 
 
 def _get_mcp_args(headless: bool, user_data_dir: Optional[str] = None) -> List[str]:
@@ -30,7 +28,7 @@ def _get_mcp_args(headless: bool, user_data_dir: Optional[str] = None) -> List[s
         args.append(f"--proxy-server={proxy_server}")
 
     if user_data_dir is None:
-        user_data_dir = DEFAULT_USER_DATA_DIR
+        user_data_dir = config.get_browser_user_data_dir()
 
     args.append(f"--user-data-dir={user_data_dir}")
 
