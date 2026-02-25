@@ -5,10 +5,10 @@
 - [x] Implement RSS feeds for audio podcasts.
 - [ ] Add update strategy (e.g. last x days / the latest x items) for data sources.
 - [ ] Add a orchestrate agent for the 3 agents.
-- [ ] Add `webui` command for running `adk web` using `debug_agents`.
 - [ ] Add a main script `smart-feeds` in `pyproject.toml`.
-- [ ] Move "special instruction" out of `create_agent`
+- [x] Move "special instruction" out of `create_agent`
 - [ ] Add dedup function for the Fetch Agent.
 - [ ] Add a `auto label` feature to add tags etc to items.
 - [x] Append raw log is dropping columns
 - [x] x fetch is ignoring orgininal item.
+- [ ] cronjob installing command

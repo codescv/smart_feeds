@@ -41,6 +41,8 @@ def fetch_website_content(url: str, selector: Optional[str] = None) -> str:
             text = "\n\n".join([elem.get_text(separator="\n", strip=True) for elem in selected_elements])
         else:
             text = soup.get_text(separator="\n", strip=True)
+        
+        print('text:', text)
 
         # Basic markdown cleaning (optional, but helpful for LLM)
         # For now, just returning the raw text is usually fine for Gemini.
