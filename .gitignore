@@ -12,6 +12,7 @@ wheels/
 # ADK
 .adk
 
-# Input user data
+# User data and config files
 inputs/
 data/
+.env
