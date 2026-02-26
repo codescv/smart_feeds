@@ -70,6 +70,18 @@ async def process_source(
     prompt = f"Process this source: `{url}`"
     if instruction:
         prompt += f"\n\nHigh-level Instruction: {instruction}"
+    else:
+        # If there are no instructions, use reasonable default 
+        # fetch counts based on source type.
+        # Avoid fetching too much to save LLM tokens.
+        if source_type in ("rss_text", "http", "browser"):
+            if 'reddit' in url:
+                prompt += "\nFetch the top 30 updates."
+            else:
+                prompt += "\nFetch the top 10 updates."
+        elif source_type == "rss_audio":
+            # Podcasts are not updated that often.
+            prompt += "\nFetch the top 3 updates."
 
     try:
         # If debug is True, we might want verbose logging
@@ -80,6 +92,13 @@ async def process_source(
     except Exception as e:
         logger.error(f"Error processing {url}: {e}")
         print(f"Error: {e}")
+    finally:
+        # Cleanup any tools that need closing (e.g. browser)
+        if agent and agent.tools:
+            for tool in agent.tools:
+                if hasattr(tool, "close") and callable(tool.close):
+                    print(f"Closing tool: {tool}")
+                    await tool.close()
 
 
 async def run_fetch_batch(model_id: Optional[str] = None, debug: bool = False):

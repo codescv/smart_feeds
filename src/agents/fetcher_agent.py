@@ -53,12 +53,6 @@ def create_fetcher_agent(
     if deduplicate_items not in tools:
         tools.append(deduplicate_items)
 
-    browser_close_instruction = ""
-    if source_type == "browser":
-        browser_close_instruction = (
-            "*IMPORTANT*: YOU MUST close the browser using the `browser_close` tool after you are done."
-        )
-
     audio_link = ""
     if source_type == "rss_audio":
         audio_link = "- `audio`: The audio file url of the item."
@@ -76,7 +70,6 @@ def create_fetcher_agent(
        - Pass the extracted list of items to `deduplicate_items`.
        - It will return a filtered list of NEW items.
     4. SAVE: Use `append_to_raw_log` to save the FILTERED items to the raw log.
-    {browser_close_instruction}
     
     IMPORTANT: `append_to_raw_log` accepts a LIST of dictionaries.
     Each item in the list must have:
