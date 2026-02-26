@@ -8,5 +8,9 @@
 - [x] Append raw log is dropping columns
 - [x] x fetch is ignoring orgininal item.
 - [x] Add a run-all command
+- [ ] refine the curator mechanism. Feed logs in chunks to avoid prompt too long. Have both a keep and a filtered.
 - [ ] cronjob installing command
 - [ ] Add a deep dive command
+- [x] fix audio link
+- [ ] strip all html tags for raw logs
+- [ ] fix my podcast rss links

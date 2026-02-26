@@ -94,25 +94,6 @@ async def run_fetch_batch(model_id: Optional[str] = None, debug: bool = False):
 
     # Handle new list-based format [[source]]
     sources = sources_config.get("source", [])
-    
-    # Backward compatibility checking
-    if not sources:
-        websites = sources_config.get("websites", [])
-        rss = sources_config.get("rss", [])
-        if websites or rss:
-            print("Detected old configuration format. Please migrate to [[source]].")
-            for w in websites:
-                if isinstance(w, str):
-                    sources.append({"url": w, "type": "browser", "enabled": True})
-                elif isinstance(w, dict):
-                    w["type"] = "browser"
-                    sources.append(w)
-            for r in rss:
-                if isinstance(r, str):
-                    sources.append({"url": r, "type": "rss_text", "enabled": True})
-                elif isinstance(r, dict):
-                    r["type"] = "rss_text"
-                    sources.append(r)
 
     for item in sources:
         if not item.get("enabled", True):

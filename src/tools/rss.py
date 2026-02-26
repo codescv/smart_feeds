@@ -6,6 +6,9 @@ from typing import List, Dict
 logger = logging.getLogger(__name__)
 
 
+MAX_CONTENT_LENGTH = 1000
+
+
 def fetch_rss_feed(url: str, limit: int = 5) -> List[Dict[str, str]]:
     """
     Fetches an RSS feed and returns the latest items.
@@ -30,15 +33,25 @@ def fetch_rss_feed(url: str, limit: int = 5) -> List[Dict[str, str]]:
         summary = entry.get("summary", "")
         if not isinstance(summary, str):
             summary = str(summary)
+        if len(summary) > MAX_CONTENT_LENGTH:
+            summary = summary[:MAX_CONTENT_LENGTH] + "..."
+
+        links = entry.get("links", [])
+        media = ""
+        for link in links:
+            if link.get("rel") == "enclosure":
+                media = link.get("href", "")
+                break
 
         items.append(
             {
                 "title": entry.get("title", "No Title"),
                 "link": entry.get("link", ""),
-                "summary": summary[:500] + "..." if len(summary) > 500 else summary,
+                "summary": summary,
                 "published": entry.get(
                     "published", entry.get("updated", "Unknown Date")
                 ),
+                "media": media,
             }
         )
 

@@ -59,6 +59,10 @@ def create_fetcher_agent(
             "*IMPORTANT*: YOU MUST close the browser using the `browser_close` tool after you are done."
         )
 
+    audio_link = ""
+    if source_type == "rss_audio":
+        audio_link = "- `audio`: The audio file url of the item."
+
     instruction = f"""
     You are a Content Fetcher Agent defined for source type: {source_type}.
     
@@ -82,6 +86,7 @@ def create_fetcher_agent(
     - `published`: The publication date/time (if available, else "Unknown").
     - `content`: The content of the item (raw text).
     - `original_content` (optional): The original post content if the item is a repost.
+    {audio_link}
     """
 
     agent = Agent(
