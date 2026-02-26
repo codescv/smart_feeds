@@ -1,7 +1,12 @@
 import os
 import datetime
 import config
+import re
+import html2text
+from typing import List, Dict, Set, Optional
 
+
+SEPARATOR = "\n---\n"
 
 
 def _get_details_path() -> str:
@@ -27,10 +32,6 @@ def _get_curated_path() -> str:
     today = datetime.date.today().isoformat()
     return os.path.join(config.get_output_dir(), "curated", f"{today}.md")
 
-
-import re
-import html2text
-from typing import List, Dict, Set, Optional
 
 def _clean_html_to_markdown(html_content: str) -> str:
     """
@@ -137,7 +138,7 @@ def _append_to_log(items: List[Dict[str, str]], filename: str) -> str:
     added_count = 0
     skipped_count = 0
 
-    for item in items:
+    for idx, item in enumerate(items):
         url = item.get("url")
         if not url:
             continue
@@ -162,7 +163,10 @@ def _append_to_log(items: List[Dict[str, str]], filename: str) -> str:
         title = _clean_title(raw_title)
         # url is already extracted above
         
-        block = f"## [{title}]({url})\n"
+        if idx == 0:
+            block = f"## [{title}]({url})\n"
+        else:
+            block = f"{SEPARATOR}## [{title}]({url})\n"
         
         exclude_keys = {"title", "url"}
         

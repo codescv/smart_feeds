@@ -15,3 +15,5 @@
 - [ ] strip all html tags for raw logs
 - [ ] fix my podcast rss links
 - [ ] add unit test
+- [x] add divider in raw log
+- [ ] fix browser in use error
