@@ -144,7 +144,7 @@ def _append_to_log(items: List[Dict[str, str]], filename: str) -> str:
     added_count = 0
     skipped_count = 0
 
-    for idx, item in enumerate(items):
+    for item in items:
         url = item.get("url")
         if not url:
             continue
@@ -169,10 +169,9 @@ def _append_to_log(items: List[Dict[str, str]], filename: str) -> str:
         title = _clean_title(raw_title)
         # url is already extracted above
         
-        if idx == 0:
-            block = f"## [{title}]({url})\n"
-        else:
-            block = f"{SEPARATOR}## [{title}]({url})\n"
+        # There is an extra SEPARATOR at the beginning of the file, but no easy fix
+        # because this function is called multiple times to the same file.
+        block = f"{SEPARATOR}## [{title}]({url})\n"
         
         exclude_keys = {"title", "url"}
         
@@ -253,13 +252,7 @@ def get_raw_item_count() -> int:
     content = read_raw_log()
     if not content or content == "No raw items found for today.":
         return 0
-    # Items are separated by SEPARATOR = "\n---\n"
-    # The first item starts with "## ", subsequent ones have separator before "## "
-    # But wait, `_append_to_log` adds separator before items except the first.
-    # So splitting by SEPARATOR is a good approximation, but let's be more robust.
-    # Actually, simplistic splitting might be enough if the format is consistent.
-    # Let's count occurrences of "## [".
-    return content.count("## [")
+    return content.count(SEPARATOR) + 1
 
 
 def read_raw_items_batch(offset: int, limit: int) -> str:
@@ -270,15 +263,8 @@ def read_raw_items_batch(offset: int, limit: int) -> str:
     content = read_raw_log()
     if not content or content == "No raw items found for today.":
         return "No raw items found."
-
-    # Split into items
-    # We know items start with '## [' and are separated by SEPARATOR
-    # Actually, regex split might be safer to keep the delimiter or reconstruction.
-    # But `_append_to_log` implementation:
-    # 1st: "## [title](url)..."
-    # Others: "\n---\n## [title](url)..."
     
-    # So if we split by "\n---\n", we get the blocks.
+    # So if we split by SEPARATOR, we get the blocks.
     items = content.split(SEPARATOR)
     
     # Handle edge case where file might start with separator or newlines

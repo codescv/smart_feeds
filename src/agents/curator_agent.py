@@ -49,6 +49,7 @@ def create_curator_agent(model_id=None):
     Each item must have:
     - `title`: Original title.
     - `url`: Original URL.
+    - `audio`: Audio URL if the original item has one.
     - `source`: Original source.
     - `published`: Original date.
     - `relevance`: Why this item matches the user's interests.
