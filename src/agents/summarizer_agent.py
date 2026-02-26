@@ -25,6 +25,9 @@ def create_summarizer_agent(model_id=None):
        - Focus on flow, readability, and grouping related stories.
     4. OUTPUT: Generate the final markdown content.
     5. SAVE: Use `save_daily_summary` to save the final digest.
+
+    **IMPORTANT**: YOU MUST include source LINKS for each item.
+    For audio podcast, the link should be the podcast audio file.
     
     # Output format
     The output should be in markdown format.
