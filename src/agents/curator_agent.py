@@ -39,8 +39,10 @@ def create_curator_agent(model_id=None):
     3. DECIDE:
        - If it MATCHES interests: Keep it.
        - If it conflicts with DISLIKES or is IRRELEVANT: Filter it.
-    4. ENRICH: For selected items, generate a `relevance` explanation and a clean `summary` in {output_language}.
-       For filtered items, provide a `reason` why it was filtered.
+    4. EXPLAIN:
+       - For selected items, generate a `explain` about why it's relevant and
+         the full `content` in {output_language} (translate if needed).
+       - For filtered items, provide a `reason` why it was filtered.
     5. SAVE: 
        - Use `append_to_curated_log` for SELECTED items.
        - Use `append_to_filtered_log` for FILTERED items.
@@ -52,9 +54,8 @@ def create_curator_agent(model_id=None):
     - `audio`: Audio URL if the original item has one.
     - `source`: Original source.
     - `published`: Original date.
-    - `relevance`: Why this item matches the user's interests.
-    - `summary`: High-quality summary in {output_language}.
-    - `reason`: (Optional) Additional context if needed.
+    - `explain`: Why this item matches the user's interests.
+    - `content`: full content (translate if needed) in {output_language}.
 
     IMPORTANT: `append_to_filtered_log` accepts a LIST of dictionaries.
     Each item must have:
@@ -62,10 +63,10 @@ def create_curator_agent(model_id=None):
     - `url`: Original URL.
     - `source`: Original source.
     - `published`: Original date.
-    - `summary`: High-quality summary in {output_language}.
+    - `content`: full content (translate if needed) in {output_language}.
     - `reason`: Why this item was filtered (e.g., "Irrelevant to user interests", "Duplicate").
     
-    Be strict. Quality over quantity.
+    All your output should be in {output_language}.
     """
 
     agent = Agent(
