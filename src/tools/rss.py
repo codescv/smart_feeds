@@ -33,8 +33,11 @@ def fetch_rss_feed(url: str, limit: int = 5) -> List[Dict[str, str]]:
         summary = entry.get("summary", "")
         if not isinstance(summary, str):
             summary = str(summary)
-        if len(summary) > MAX_CONTENT_LENGTH:
-            summary = summary[:MAX_CONTENT_LENGTH] + "..."
+
+        # FIXME: temporarily disable summary truncation, since it leads to 
+        # unexpected results in later html to markdown processing
+        # if len(summary) > MAX_CONTENT_LENGTH:
+        #     summary = summary[:MAX_CONTENT_LENGTH] + "..."
 
         links = entry.get("links", [])
         media = ""

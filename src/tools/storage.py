@@ -33,6 +33,12 @@ def _get_curated_path() -> str:
     return os.path.join(config.get_output_dir(), "curated", f"{today}.md")
 
 
+def _get_filtered_path() -> str:
+    """Returns the path for today's filtered items."""
+    today = datetime.date.today().isoformat()
+    return os.path.join(config.get_output_dir(), "curated", f"{today}.filtered.md")
+
+
 def _clean_html_to_markdown(html_content: str) -> str:
     """
     Converts HTML content to Markdown using html2text.
@@ -218,6 +224,13 @@ def append_to_curated_log(items: List[Dict[str, str]]):
     return _append_to_log(items, _get_curated_path())
 
 
+def append_to_filtered_log(items: List[Dict[str, str]]):
+    """
+    Appends rejected/filtered items to the filtered log (e.g. data/curated/YYYY-MM-DD.filtered.md).
+    """
+    return _append_to_log(items, _get_filtered_path())
+
+
 def append_to_details_log(items: List[Dict[str, str]]):
     """
     DEPRECATED: Use append_to_curated_log instead.
@@ -233,6 +246,52 @@ def read_raw_log() -> str:
         return "No raw items found for today."
     with open(filename, "r", encoding="utf-8") as f:
         return f.read()
+
+
+def get_raw_item_count() -> int:
+    """Returns the total number of raw items available today."""
+    content = read_raw_log()
+    if not content or content == "No raw items found for today.":
+        return 0
+    # Items are separated by SEPARATOR = "\n---\n"
+    # The first item starts with "## ", subsequent ones have separator before "## "
+    # But wait, `_append_to_log` adds separator before items except the first.
+    # So splitting by SEPARATOR is a good approximation, but let's be more robust.
+    # Actually, simplistic splitting might be enough if the format is consistent.
+    # Let's count occurrences of "## [".
+    return content.count("## [")
+
+
+def read_raw_items_batch(offset: int, limit: int) -> str:
+    """
+    Reads a batch of raw items.
+    Returns string content containing the items.
+    """
+    content = read_raw_log()
+    if not content or content == "No raw items found for today.":
+        return "No raw items found."
+
+    # Split into items
+    # We know items start with '## [' and are separated by SEPARATOR
+    # Actually, regex split might be safer to keep the delimiter or reconstruction.
+    # But `_append_to_log` implementation:
+    # 1st: "## [title](url)..."
+    # Others: "\n---\n## [title](url)..."
+    
+    # So if we split by "\n---\n", we get the blocks.
+    items = content.split(SEPARATOR)
+    
+    # Handle edge case where file might start with separator or newlines
+    items = [i for i in items if i.strip()]
+    
+    total = len(items)
+    if offset >= total:
+        return ""
+        
+    batch = items[offset : offset + limit]
+    
+    # Reconstruct for the agent
+    return SEPARATOR.join(batch)
 
 
 def read_curated_log() -> str:

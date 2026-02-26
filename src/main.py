@@ -128,19 +128,50 @@ async def run_fetch_batch(model_id: Optional[str] = None, debug: bool = False):
 
 async def run_curate(model_id: Optional[str] = None, debug: bool = False):
     print("\n>>> Starting Curation (Filtering & Ranking)")
-    agent = create_curator_agent(model_id=model_id)
-    runner = Runner(
-        agent=agent, app_name="smart-feeds", session_service=InMemorySessionService()
-    )
     
-    prompt = "Read the daily raw log and filter for relevant content based on user interests."
+    # 1. Get total count of raw items
+    from tools.storage import get_raw_item_count
+    total_items = get_raw_item_count()
+    print(f"Total raw items to process: {total_items}")
     
-    try:
-        await runner.run_debug(prompt, quiet=False, verbose=True)
-        print("Curation complete.")
-    except Exception as e:
-        logger.error(f"Error generating curation: {e}")
-        print(f"Error: {e}")
+    if total_items == 0:
+        print("No raw items found. Exiting curation.")
+        return
+
+    # 2. Batch processing configuration
+    BATCH_SIZE = 20  # Adjust as needed to fit context window
+    
+    # 3. Process in batches
+    for offset in range(0, total_items, BATCH_SIZE):
+        limit = BATCH_SIZE
+        print(f"\n--- Processing Batch: {offset} to {offset + limit} (of {total_items}) ---")
+        
+        # Instantiate a fresh agent for each batch to keep context clean (stateless)
+        # Or reuse if we want some memory, but for curation stateless is usually safer/cheaper.
+        agent = create_curator_agent(model_id=model_id)
+        
+        runner = Runner(
+            agent=agent, app_name="smart-feeds", session_service=InMemorySessionService()
+        )
+        
+        # We can either pass the data directly in prompt or tell agent to read it.
+        # Passing directly saves one tool call (read_raw_items_batch) per batch.
+        # But `read_raw_items_batch` is already implemented and agent has it.
+        # Let's try telling the agent to read the specific batch.
+        
+        prompt = (
+            f"Please process the raw log batch starting at offset {offset} with limit {limit}. "
+            f"Read these {limit} items using `read_raw_items_batch({offset}, {limit})`, "
+            f"then filter and save them."
+        )
+        
+        try:
+            await runner.run_debug(prompt, quiet=False, verbose=True)
+        except Exception as e:
+            logger.error(f"Error processing batch {offset}: {e}")
+            print(f"Error in batch {offset}: {e}")
+            
+    print("Curation complete.")
 
 
 async def run_summarize(model_id: Optional[str] = None, debug: bool = False):
