@@ -310,3 +310,34 @@ def save_daily_summary(content: str):
         f.write(content)
         
     return f"Summary saved to {filename}"
+
+
+def read_daily_summary() -> str:
+    """Reads content of today's daily summary (TLDR)."""
+    filename = _get_summary_path()
+    if not os.path.exists(filename):
+        return "No daily summary found for today."
+    with open(filename, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+def _get_deep_dive_path() -> str:
+    """Returns the path for today's deep dive report."""
+    today = datetime.date.today().isoformat()
+    return os.path.join(config.get_output_dir(), "deep_dive", f"{today}.md")
+
+
+def save_deep_dive_report(content: str):
+    """
+    Saves the deep dive report to the deep dive file.
+    Overwrites if exists to allow updates.
+    """
+    filename = _get_deep_dive_path()
+    
+    # Ensure deep_dive directory exists
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(content)
+        
+    return f"Deep dive report saved to {filename}"

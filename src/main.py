@@ -15,6 +15,7 @@ from tools.storage import append_to_raw_log
 from agents.fetcher_agent import create_fetcher_agent
 from agents.curator_agent import create_curator_agent
 from agents.summarizer_agent import create_summarizer_agent
+from agents.deep_dive_agent import create_deep_dive_agent
 
 from google.adk.runners import Runner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
@@ -238,6 +239,45 @@ def summarize(
     asyncio.run(run_summarize(model_id=model, debug=debug))
 
 
+async def run_deep_dive(model_id: Optional[str] = None, debug: bool = False):
+    print("\n>>> Starting Deep Dive Analysis")
+    agent = create_deep_dive_agent(model_id=model_id, debug=debug)
+    runner = Runner(
+        agent=agent, app_name="smart-feeds", session_service=InMemorySessionService()
+    )
+    
+    prompt = "Please read the daily TLDR summary and generate a Deep Dive Report."
+    
+    try:
+        await runner.run_debug(prompt, quiet=False, verbose=True)
+        print("Deep Dive analysis complete.")
+    except Exception as e:
+        logger.error(f"Error generating deep dive report: {e}")
+        print(f"Error: {e}")
+    finally:
+         # Cleanup (close browser if it was opened)
+        if agent and agent.tools:
+            for tool in agent.tools:
+                if hasattr(tool, "close") and callable(tool.close):
+                    print(f"Closing tool: {tool}")
+                    await tool.close()
+
+
+@app.command()
+def deep_dive(
+    model: Optional[str] = typer.Option(
+        None, help="Model ID to use (e.g., gemini-2.0-flash)"
+    ),
+    debug: bool = typer.Option(
+        False, help="Enable debug mode (visible browser, verbose logs)"
+    ),
+):
+    """
+    Stage 4: Generates a Deep Dive Report from the TLDR summary using Browser.
+    """
+    asyncio.run(run_deep_dive(model_id=model, debug=debug))
+
+
 @app.command()
 def run_all(
     model: Optional[str] = typer.Option(
@@ -264,6 +304,10 @@ def run_all(
     # 3. Summarize
     # run_summarize already prints start/end messages
     asyncio.run(run_summarize(model_id=model, debug=debug))
+
+    # 4. Deep Dive
+    # run_deep_dive already prints start/end messages
+    asyncio.run(run_deep_dive(model_id=model, debug=debug))
 
     print("Pipeline complete.")
 

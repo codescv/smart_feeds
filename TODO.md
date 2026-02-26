@@ -14,7 +14,7 @@
 - [x] add divider in raw log
 - [x] fix browser in use error
 - [x] refine the curator mechanism. Feed logs in chunks to avoid prompt too long. Have both a keep and a filtered.
+- [x] Add a deep dive command
 - [ ] fix the summary truncation issue
 - [ ] add unit tests
 - [ ] cronjob installing command
-- [ ] Add a deep dive command
