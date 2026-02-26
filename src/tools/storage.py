@@ -29,7 +29,79 @@ def _get_curated_path() -> str:
 
 
 import re
+import html2text
 from typing import List, Dict, Set, Optional
+
+def _clean_html_to_markdown(html_content: str) -> str:
+    """
+    Converts HTML content to Markdown using html2text.
+    """
+    if not html_content:
+        return ""
+    
+    h = html2text.HTML2Text()
+    h.ignore_links = False
+    h.ignore_images = False
+    h.body_width = 0  # Disable line wrapping
+    
+    try:
+        markdown = h.handle(html_content)
+        
+        # Post-process to convert headers to bold
+        # Split by lines
+        lines = markdown.split('\n')
+        new_lines = []
+        for line in lines:
+            # Check if line starts with headers (#, ##, etc)
+            # We use a regex to capture the content
+            match = re.match(r'^(#+)\s+(.*)', line)
+            if match:
+                content = match.group(2)
+                # Convert to bold
+                new_lines.append(f"**{content}**")
+            else:
+                new_lines.append(line)
+        
+        return "\n".join(new_lines).strip()
+    except Exception as e:
+        # Fallback if something goes wrong
+        print(f"Error converting HTML to Markdown: {e}")
+        return html_content
+
+def _clean_title(title: str) -> str:
+    """
+    Cleans the title:
+    1. Removes HTML tags.
+    2. Removes newlines.
+    3. Truncates to 80 characters.
+    """
+    if not title:
+        return "No Title"
+    
+    # Remove HTML tags
+    h = html2text.HTML2Text()
+    h.ignore_links = True
+    h.ignore_images = True
+    h.body_width = 0
+    
+    try:
+        clean_title = h.handle(title).strip()
+    except Exception as e:
+        # Fallback if something goes wrong
+        clean_title = title
+
+    # Remove newlines
+    clean_title = clean_title.replace("\n", " ").replace("\r", "")
+    
+    # Collapse multiple spaces
+    clean_title = re.sub(r'\s+', ' ', clean_title).strip()
+    
+    # Truncate
+    if len(clean_title) > 80:
+        clean_title = clean_title[:77] + "..."
+        
+    return clean_title
+
 
 def _extract_urls_from_markdown(content: str) -> Set[str]:
     """
@@ -84,8 +156,10 @@ def _append_to_log(items: List[Dict[str, str]], filename: str) -> str:
             skipped_count += 1
             continue
 
+
         # Format item as markdown
-        title = item.get("title", "No Title")
+        raw_title = item.get("title", "No Title")
+        title = _clean_title(raw_title)
         # url is already extracted above
         
         block = f"## [{title}]({url})\n"
@@ -103,6 +177,11 @@ def _append_to_log(items: List[Dict[str, str]], filename: str) -> str:
             val = item[key]
             if val is not None and val != "":
                 label = key.replace("_", " ").title()
+                
+                # Clean content if key is 'content'
+                if key == "content":
+                    val = _clean_html_to_markdown(val)
+                
                 # Handle lists or dicts? For now assume strings as per docstring hints.
                 # If value is complex, maybe stringify it nicely?
                 # But existing code assumed str.

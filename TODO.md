@@ -14,3 +14,4 @@
 - [x] fix audio link
 - [ ] strip all html tags for raw logs
 - [ ] fix my podcast rss links
+- [ ] add unit test

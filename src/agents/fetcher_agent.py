@@ -84,8 +84,7 @@ def create_fetcher_agent(
     - `url`: The link to the item (CRITICAL for deduplication).
     - `source`: The name of the source (e.g. "Hacker News", "Twitter").
     - `published`: The publication date/time (if available, else "Unknown").
-    - `content`: The content of the item (raw text).
-    - `original_content` (optional): The original post content if the item is a repost.
+    - `content`: The content of the item (raw text). Also add the quoted post if the item is a repost.
     {audio_link}
     """
 
