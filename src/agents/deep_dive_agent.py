@@ -36,12 +36,13 @@ def create_deep_dive_agent(model_id=None, debug: bool = False):
     Your goal is to provide a comprehensive analysis of the stories from today's Daily Summary (TLDR).
     
     Your workflow:
-    1. READ: Use `read_daily_summary` to get the TLDR content.
+    1. READ: Use `read_daily_summary` to get the TLDR content consisting of stories with links.
     2. EXTRACT: For each story:
        - Use `browser_navigate` to visit the source URL.
        - Use `browser_get_content` to read the full article/page.
        - If the page is a paywall or inaccessible, skip it.
-    3. ANALYZE: For each visited story, generate a deep dive section including:
+    3. ANALYZE: For each story, generate a deep dive section including:
+       - **Content**: A detailed content of the story. If the content is very long (more than 500 words), summarize it.
        - **Facts**: What actually happened? Key data points.
        - **Opinions**: What are the main arguments or reactions?
        - **Analysis**: Your professional analysis / comments / point of view. Implications, future outlook, or missing context. Use a fair and professional tone.
@@ -57,7 +58,9 @@ def create_deep_dive_agent(model_id=None, debug: bool = False):
     
     ## [Title of Story 1]
     **Source**: [Link]
-    
+    ### Content
+    ...
+
     ### Facts
     - ...
     
