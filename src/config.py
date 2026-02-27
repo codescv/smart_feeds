@@ -39,3 +39,11 @@ def get_browser_user_data_dir() -> str:
 def get_sources_config_path() -> str:
     """Returns the path to the sources configuration file."""
     return os.path.join(get_input_dir(), "sources.toml")
+
+def get_retry_max_attempts() -> int:
+    """Returns the maximum number of retries for 429 errors."""
+    return int(os.getenv("RETRY_MAX_ATTEMPTS", "8"))
+
+def get_retry_delay_seconds() -> float:
+    """Returns the initial delay in seconds for retries."""
+    return float(os.getenv("RETRY_DELAY_SECONDS", "5.0"))

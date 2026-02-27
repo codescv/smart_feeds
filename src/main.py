@@ -8,8 +8,8 @@ import config
 from tools.mcp_browser import configure_browser_session, get_browser_toolset
 from tools.rss import fetch_rss_feed
 from tools.http import fetch_website_content
-from tools.audio import transcribe_audio_url
 from tools.storage import append_to_raw_log
+from retry_utils import retry_async, retry_sync
 
 # Import new agents
 from agents.fetcher_agent import create_fetcher_agent
@@ -85,8 +85,17 @@ async def process_source(
             prompt += "\nFetch the top 3 updates."
 
     try:
-        # If debug is True, we might want verbose logging
-        events = await runner.run_debug(prompt, quiet=False, verbose=True)
+        # Define local function with retry decorator
+        @retry_async(
+            max_retries=config.get_retry_max_attempts(),
+            initial_delay=config.get_retry_delay_seconds()
+        )
+        async def run_agent():
+            return await runner.run_debug(prompt, quiet=False, verbose=True)
+
+        # Execute
+        events = await run_agent()
+
         if events is None:
             print("No events returned.")
 
@@ -169,7 +178,14 @@ async def run_curate(model_id: Optional[str] = None, debug: bool = False):
         )
         
         try:
-            await runner.run_debug(prompt, quiet=False, verbose=True)
+            @retry_async(
+                max_retries=config.get_retry_max_attempts(),
+                initial_delay=config.get_retry_delay_seconds()
+            )
+            async def run_batch():
+                return await runner.run_debug(prompt, quiet=False, verbose=True)
+            
+            await run_batch()
         except Exception as e:
             logger.error(f"Error processing batch {offset}: {e}")
             print(f"Error in batch {offset}: {e}")
@@ -187,7 +203,14 @@ async def run_summarize(model_id: Optional[str] = None, debug: bool = False):
     prompt = "Please read the daily CURATED details and generate the TLDR summary."
     
     try:
-        await runner.run_debug(prompt, quiet=False, verbose=True)
+        @retry_async(
+            max_retries=config.get_retry_max_attempts(),
+            initial_delay=config.get_retry_delay_seconds()
+        )
+        async def run_summary():
+            return await runner.run_debug(prompt, quiet=False, verbose=True)
+
+        await run_summary()
         print("TLDR generation complete.")
     except Exception as e:
         logger.error(f"Error generating summary: {e}")
@@ -250,7 +273,14 @@ async def run_deep_dive(model_id: Optional[str] = None, debug: bool = False):
     prompt = "Please read the daily TLDR summary and generate a Deep Dive Report."
     
     try:
-        await runner.run_debug(prompt, quiet=False, verbose=True)
+        @retry_async(
+            max_retries=config.get_retry_max_attempts(),
+            initial_delay=config.get_retry_delay_seconds()
+        )
+        async def run_deep_dive_job():
+            return await runner.run_debug(prompt, quiet=False, verbose=True)
+
+        await run_deep_dive_job()
         print("Deep Dive analysis complete.")
     except Exception as e:
         logger.error(f"Error generating deep dive report: {e}")
@@ -321,7 +351,15 @@ def install_cron(
                 f"Description: {spec}\n"
                 f"Output ONLY the cron expression. Do not output any markdown or explanation."
             )
-            response = client.models.generate_content(model=model, contents=prompt)
+            
+            @retry_sync(
+                max_retries=config.get_retry_max_attempts(),
+                initial_delay=config.get_retry_delay_seconds()
+            )
+            def generate_cron():
+                return client.models.generate_content(model=model, contents=prompt)
+
+            response = generate_cron()
             if response.text:
                  cron_spec = response.text.strip().replace("`", "")
                  print(f"Converted to: {cron_spec}")
