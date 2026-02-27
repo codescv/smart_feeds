@@ -488,6 +488,9 @@ def run_all(
     model: Optional[str] = typer.Option(
         None, help="Model ID to use (e.g., gemini-2.0-flash)"
     ),
+    image_model: Optional[str] = typer.Option(
+        None, help="Model ID to use for image generation (default: env IMAGE_MODEL_ID)"
+    ),
     debug: bool = typer.Option(
         False, help="Enable debug mode (verbose logs)"
     ),
@@ -505,6 +508,9 @@ def run_all(
 
     # 3. Summarize
     asyncio.run(run_summarize(model_id=model, debug=debug))
+
+    # 4. Generate Cover
+    generate_cover(model=model, image_model=image_model, debug=debug)
 
     print("Pipeline complete.")
 
