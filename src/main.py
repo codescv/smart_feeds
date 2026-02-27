@@ -346,8 +346,14 @@ def install_cron(
     project_root = os.path.dirname(src_dir)
     
     # 3. Construct command
-    # cd /path/to/project && /path/to/uv run src/main.py run_all
-    job_command = f"cd {project_root} && {uv_path} run src/main.py run_all"
+    # cd "/path/to/project" && "/path/to/uv" run src/main.py run_all >> "/path/to/output/cron.log" 2>&1
+    output_dir = config.get_output_dir()
+    # Ensure absolute path for log file
+    if not os.path.isabs(output_dir):
+        output_dir = os.path.join(project_root, output_dir)
+    
+    log_file = os.path.join(output_dir, "cron.log")
+    job_command = f'cd "{project_root}" && "{uv_path}" run src/main.py run_all >> "{log_file}" 2>&1'
     
     # 4. Update Crontab
     try:
