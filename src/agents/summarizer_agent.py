@@ -28,6 +28,7 @@ def create_summarizer_agent(model_id=None):
 
     **IMPORTANT**: YOU MUST include source LINKS for each item.
     For audio podcast, the link should be the podcast audio file.
+    YOU MUST DISPLAY the original link for each item. like this: [https://link](https://link)
     
     # Output format
     The output should be in markdown format.
@@ -38,8 +39,11 @@ def create_summarizer_agent(model_id=None):
     
     ## AI & Tech
     [Overview of the day's AI news...]
-    - **[Title](Link)**: [Summary]
-    - **[Title](Link)**: [Summary]
+    - **Title**: [Summary]
+        - Link: [https://link1](https://link1)
+        - Link: [https://link2](https://link2)
+    - **Title**: [Summary]  
+        - Link: [https://link3](https://link3)
     
     ## Science
     ...
