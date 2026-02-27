@@ -8,7 +8,8 @@ import config
 from tools.mcp_browser import configure_browser_session, get_browser_toolset
 from tools.rss import fetch_rss_feed
 from tools.http import fetch_website_content
-from tools.storage import append_to_raw_log
+from tools.storage import append_to_raw_log, read_daily_summary, get_cover_path
+from tools.image import generate_image
 from retry_utils import retry_async, retry_sync
 
 # Import new agents
@@ -307,6 +308,72 @@ def deep_dive(
     Stage 4: Generates a Deep Dive Report from the TLDR summary using Browser.
     """
     asyncio.run(run_deep_dive(model_id=model, debug=debug))
+
+
+@app.command()
+def generate_cover(
+    model: Optional[str] = typer.Option(
+        None, help="Model ID to use for prompt generation (default: env MODEL_ID)"
+    ),
+    image_model: Optional[str] = typer.Option(
+        None, help="Model ID to use for image generation (default: env IMAGE_MODEL_ID)"
+    ),
+    debug: bool = typer.Option(
+        False, help="Enable debug mode"
+    ),
+):
+    """
+    Stage 5: Generates a cover image for the daily TLDR summary.
+    """
+    print(f"Starting Cover Image Generation... (Model: {image_model})")
+    
+    # 1. Read TLDR Summary
+    summary = read_daily_summary()
+    if not summary or "No daily summary found" in summary:
+        print("Error: No daily summary found. Please run 'summarize' first.")
+        return
+
+    # 2. Generate Image Prompt
+    from google import genai
+    
+    client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+    if not model:
+        model = config.get_model_id()
+    
+    if not image_model:
+        image_model = config.get_image_model_id()
+        
+    prompt_instruction = (
+        "You are an expert art director. "
+        "Create a high-quality, abstract, and engaging cover image prompt for a tech newsletter based on the following summary. "
+        "The prompt should describe a visual scene, style, and mood. "
+        "Keep it under 100 words. "
+        "Output ONLY the prompt, no explanation."
+    )
+    
+    full_prompt = f"{prompt_instruction}\n\nSummary:\n{summary[:2000]}..." # Truncate to avoid token limits if super long
+    
+    try:
+        response = client.models.generate_content(model=model, contents=full_prompt)
+        image_prompt = response.text.strip()
+        print(f"\nGenerated Prompt: {image_prompt}\n")
+        
+        # 3. Generate Image
+        output_path = get_cover_path()
+        result = generate_image(
+            prompt=image_prompt,
+            output_path=output_path,
+            model_id=image_model
+        )
+        
+        if result:
+            print(f"Cover image successfully generated at: {result}")
+        else:
+            print("Failed to generate cover image.")
+            
+    except Exception as e:
+        print(f"Error generating cover: {e}")
+
 
 
 

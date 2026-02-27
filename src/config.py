@@ -47,3 +47,13 @@ def get_retry_max_attempts() -> int:
 def get_retry_delay_seconds() -> float:
     """Returns the initial delay in seconds for retries."""
     return float(os.getenv("RETRY_DELAY_SECONDS", "5.0"))
+
+
+def get_model_id() -> str:
+    """Returns the text generation model ID."""
+    return os.getenv("MODEL_ID", "gemini-2.0-flash")
+
+
+def get_image_model_id() -> str:
+    """Returns the image generation model ID."""
+    return os.getenv("IMAGE_MODEL_ID", "imagen-3.0-generate-001")

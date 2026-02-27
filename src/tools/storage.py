@@ -39,6 +39,12 @@ def _get_filtered_path() -> str:
     return os.path.join(config.get_output_dir(), "curated", f"{today}.filtered.md")
 
 
+def get_cover_path() -> str:
+    """Returns the path for today's daily cover image."""
+    today = datetime.date.today().isoformat()
+    return os.path.join(config.get_output_dir(), "covers", f"{today}.png")
+
+
 def _clean_html_to_markdown(html_content: str) -> str:
     """
     Converts HTML content to Markdown using html2text.
