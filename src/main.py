@@ -279,6 +279,99 @@ def deep_dive(
     asyncio.run(run_deep_dive(model_id=model, debug=debug))
 
 
+
+@app.command()
+def install_cron(
+    spec: str = typer.Argument(..., help="The cron schedule (e.g. '0 8 * * *' or 'every day at 8am')"),
+    model: Optional[str] = typer.Option(
+        None, help="Model ID for NL parsing (if not a valid cron expression)"
+    ),
+):
+    """
+    Installs a cron job to run `run_all` command.
+    """
+    import shutil
+    from crontab import CronTab
+    from google import genai
+
+    # 1. Parse Schedule
+    cron_spec = spec.strip()
+    is_cron = False
+    
+    # Check if likely a cron expression
+    if cron_spec.startswith("@"):
+        is_cron = True
+    else:
+        parts = cron_spec.split()
+        # Basic check for 5 parts
+        if len(parts) == 5:
+             # Basic char check
+             if all(c in "0123456789*/,-" for part in parts for c in part):
+                 is_cron = True
+
+    if not is_cron:
+        try:
+            print(f"Interpreting schedule: '{spec}'...")
+            client = genai.Client()
+            if not model:
+                model = os.getenv("MODEL_ID", "gemini-2.0-flash")
+            
+            prompt = (
+                f"Convert the following schedule description into a standard cron expression (5 fields).\n"
+                f"Description: {spec}\n"
+                f"Output ONLY the cron expression. Do not output any markdown or explanation."
+            )
+            response = client.models.generate_content(model=model, contents=prompt)
+            if response.text:
+                 cron_spec = response.text.strip().replace("`", "")
+                 print(f"Converted to: {cron_spec}")
+            else:
+                 print("Error: Empty response from LLM")
+                 return
+        except Exception as e:
+            print(f"Error parsing schedule: {e}")
+            return
+
+    # 2. Locate uv and project root
+    uv_path = shutil.which("uv")
+    if not uv_path:
+        # Fallback to absolute path if which fails but we are running via uv
+        uv_path = "/usr/local/bin/uv" # weak guess, better to fail
+        print("Error: `uv` not found in PATH.")
+        return
+
+    # Assuming this script is at src/main.py
+    script_path = os.path.abspath(__file__)
+    src_dir = os.path.dirname(script_path)
+    project_root = os.path.dirname(src_dir)
+    
+    # 3. Construct command
+    # cd /path/to/project && /path/to/uv run src/main.py run_all
+    job_command = f"cd {project_root} && {uv_path} run src/main.py run_all"
+    
+    # 4. Update Crontab
+    try:
+        # User crontab
+        cron = CronTab(user=True)
+        # Remove existing job if any
+        iter_jobs = cron.find_comment('smart-feeds-run-all')
+        for job in iter_jobs:
+            cron.remove(job)
+        
+        job = cron.new(command=job_command, comment='smart-feeds-run-all')
+        job.setall(cron_spec)
+        
+        if not job.is_valid():
+            print(f"Error: Invalid cron expression '{cron_spec}'")
+            return
+
+        cron.write()
+        print(f"Successfully installed cron job: {cron_spec}")
+        print(f"Command: {job_command}")
+    except Exception as e:
+        print(f"Error installing cron job: {e}")
+
+
 @app.command()
 def run_all(
     model: Optional[str] = typer.Option(
