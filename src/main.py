@@ -103,6 +103,7 @@ async def process_source(
 
 
 async def run_fetch_batch(model_id: Optional[str] = None, debug: bool = False):
+    print("\n>>>Fetching content...")
     # Assuming running from project root
     sources_path = config.get_sources_config_path()
     if not os.path.exists(sources_path):
@@ -125,6 +126,7 @@ async def run_fetch_batch(model_id: Optional[str] = None, debug: bool = False):
             model_id=model_id,
             debug=debug,
         )
+    print("Fetch complete.")
 
 
 async def run_curate(model_id: Optional[str] = None, debug: bool = False):
@@ -206,7 +208,6 @@ def fetch(
     """
     print(f"Starting Smart Feeds content fetch... (Debug: {debug})")
     asyncio.run(run_fetch_batch(model_id=model, debug=debug))
-    print("Fetch complete.")
 
 
 @app.command()
@@ -293,21 +294,13 @@ def run_all(
     print(f"Starting Smart Feeds Pipeline... (Debug: {debug})")
 
     # 1. Fetch
-    print(">>> Stage 1: Fetching content...")
     asyncio.run(run_fetch_batch(model_id=model, debug=debug))
-    print("Fetch complete.")
 
     # 2. Curate
-    # run_curate already prints start/end messages
     asyncio.run(run_curate(model_id=model, debug=debug))
 
     # 3. Summarize
-    # run_summarize already prints start/end messages
     asyncio.run(run_summarize(model_id=model, debug=debug))
-
-    # 4. Deep Dive
-    # run_deep_dive already prints start/end messages
-    asyncio.run(run_deep_dive(model_id=model, debug=debug))
 
     print("Pipeline complete.")
 
