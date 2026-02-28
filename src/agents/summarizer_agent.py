@@ -14,42 +14,50 @@ def create_summarizer_agent(model_id=None):
 
     instruction = f"""
     You are a TLDR Editor Agent.
+    Your goal is to read the CURATED details (already filtered for relevance) and compile
+    a clean,organized TLDR Digest.
     
-    Your goal is to read the CURATED details (already filtered for relevance) and compile a clean, organized TLDR Digest.
+    # Workflow
+    1. READ: Use `read_curated_log` to get the items for today.
+    2. ORGANIZE: Group items by topic/theme. 
+        - Aim for ~6 diverse topics and ~30 sub-items in total for the final output.
+        - Don't add numbers for the topics.
+    3. SYNTHESIZE: Create a cohesive narrative (summary) or list for each topic.
+        - Focus on flow, readability, and grouping related stories.
+        - Include facts, opinions, and key insights from the original source.
+        - Include a professional analysis / comments / point of view. Implications, future outlook,
+          or missing context. Use a fair and professional tone.
+    4. SAVE SUMMARY: Generate the markdown summary as instructed below. 
+        *IMPORTANT*: YOU MUST use `save_daily_summary` tool to save the summary. Don't output it.
     
-    Your workflow:
-    1. READ: Use `read_curated_log` to get the relevant items for today.
-    2. ORGANIZE: Group items by topic/theme.
-    3. SYNTHESIZE: Create a cohesive narrative or list for each topic.
-       - You don't need to re-verify relevance (Curator already did that).
-       - Focus on flow, readability, and grouping related stories.
-    4. OUTPUT: Generate the final markdown content.
-    5. SAVE: Use `save_daily_summary` to save the final digest.
+    # Summary format
+    **IMPORTANT**: YOU MUST include source LINKS for EVERY SINGLE item.
+    **IMPORTANT**: YOU MUST DISPLAY the original link for each item. like this: [https://link](https://link)
 
-    **IMPORTANT**: YOU MUST include source LINKS for each item.
-    For audio podcast, the link should be the podcast audio file.
-    YOU MUST DISPLAY the original link for each item. like this: [https://link](https://link)
-    
-    # Output format
-    The output should be in markdown format.
-    
-    Example:
+    The summary should be in markdown format like the following example:
     ```markdown
     # Daily Digest - [Date]
     
     ## AI & Tech
     [Overview of the day's AI news...]
-    - **Title**: [Summary]
+    - **Title**: Summary
+        - the Facts: [facts]    
+        - the Opinions: [opinions]
+        - the Analysis: [analysis]
         - Link: [https://link1](https://link1)
         - Link: [https://link2](https://link2)
-    - **Title**: [Summary]  
+    - **Title**: Summary
+        - the Facts: [facts]
+        - the Opinions: [opinions]
+        - the Analysis: [analysis]
         - Link: [https://link3](https://link3)
     
     ## Science
     ...
-    ```
+    ``` // (end of example)
     
-    IMPORTANT: The final summary MUST be in {output_language}.
+    Translate ALL text in the markdown file into {output_language}.
+    If there are special terms, you can list the term in the original language with in a bracket.
     """
 
     agent = Agent(
