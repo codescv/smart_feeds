@@ -385,7 +385,7 @@ def install_cron(
     ),
 ):
     """
-    Installs a cron job to run `run_all` command.
+    Installs a cron job to run `run-all` command.
     """
     import shutil
     from crontab import CronTab
@@ -451,14 +451,25 @@ def install_cron(
     project_root = os.path.dirname(src_dir)
     
     # 3. Construct command
-    # cd "/path/to/project" && "/path/to/uv" run src/main.py run_all >> "/path/to/output/cron.log" 2>&1
     output_dir = config.get_output_dir()
     # Ensure absolute path for log file
     if not os.path.isabs(output_dir):
         output_dir = os.path.join(project_root, output_dir)
     
     log_file = os.path.join(output_dir, "cron.log")
-    job_command = f'cd "{project_root}" && "{uv_path}" run src/main.py run_all >> "{log_file}" 2>&1'
+    
+    # Prepend npx path to PATH to ensure it's found (essential for browser tool)
+    npx_path = shutil.which("npx")
+    env_prefix = ""
+    if npx_path:
+        npx_dir = os.path.dirname(npx_path)
+        # We prepend to PATH
+        env_prefix = f'export PATH="{npx_dir}:$PATH" && '
+        print(f"Detected npx at: {npx_path}")
+    else:
+        print("Warning: npx not found in PATH. Ensure it is installed and available or browser tool will FAIL.")
+
+    job_command = f'{env_prefix}cd "{project_root}" && "{uv_path}" run src/main.py run-all > "{log_file}" 2>&1'
     
     # 4. Update Crontab
     try:
