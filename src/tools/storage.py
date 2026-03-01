@@ -15,6 +15,15 @@ def _get_details_path() -> str:
     return os.path.join(config.get_output_dir(), "details", f"{today}.md")
 
 
+def get_current_date_str() -> str:
+    """
+    Returns the current date in ISO format (YYYY-MM-DD).
+    Use this to get the accurate date for the summary title.
+    """
+    return datetime.date.today().isoformat()
+
+
+
 def _get_summary_path() -> str:
     """Returns the path for today's daily news summary (TLDR)."""
     today = datetime.date.today().isoformat()

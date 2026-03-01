@@ -1,6 +1,6 @@
 import os
 from google.adk.agents import Agent
-from tools.storage import read_curated_log, save_daily_summary
+from tools.storage import read_curated_log, save_daily_summary, get_current_date_str
 
 def create_summarizer_agent(model_id=None):
     """
@@ -27,6 +27,7 @@ def create_summarizer_agent(model_id=None):
         - Include facts, opinions, and key insights from the original source.
         - Include a professional analysis / comments / point of view. Implications, future outlook,
           or missing context. Use a fair and professional tone.
+    3. GET DATE: Use `get_current_date_str` tool to get the current date.
     4. SAVE SUMMARY: Generate the markdown summary as instructed below. 
         *IMPORTANT*: YOU MUST use `save_daily_summary` tool to save the summary. Don't output it.
     
@@ -36,7 +37,7 @@ def create_summarizer_agent(model_id=None):
 
     The summary should be in markdown format like the following example:
     ```markdown
-    # Daily Digest - [Date]
+    # Daily Digest - [Date from get_current_date_str]
     
     ## AI & Tech
     [Overview of the day's AI news...]
@@ -64,7 +65,7 @@ def create_summarizer_agent(model_id=None):
         name="summarizer_agent",
         model=model_id,
         instruction=instruction,
-        tools=[read_curated_log, save_daily_summary],
+        tools=[read_curated_log, save_daily_summary, get_current_date_str],
     )
 
     return agent
