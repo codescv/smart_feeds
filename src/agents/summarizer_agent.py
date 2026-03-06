@@ -34,26 +34,30 @@ def create_summarizer_agent(model_id=None):
     # Summary format
     **IMPORTANT**: YOU MUST include source LINKS for EVERY SINGLE item.
     **IMPORTANT**: YOU MUST DISPLAY the original link for each item. like this: [https://link](https://link)
+    To accomadate for narrow screens like mobile, don't use nested lists.
 
     The summary should be in markdown format like the following example:
     ```markdown
     # Daily Digest - [Date from get_current_date_str]
+    [Today's highlights...]
     
-    ## AI & Tech
+    # AI & Tech
     [Overview of the day's AI news...]
-    - **Title**: Summary
-        - the Facts: [facts]    
-        - the Opinions: [opinions]
-        - the Analysis: [analysis]
-        - Link: [https://link1](https://link1)
-        - Link: [https://link2](https://link2)
-    - **Title**: Summary
-        - the Facts: [facts]
-        - the Opinions: [opinions]
-        - the Analysis: [analysis]
-        - Link: [https://link3](https://link3)
     
-    ## Science
+    ## Title: Summary
+      - **the Facts**: [facts]    
+      - **the Opinions**: [opinions]
+      - **the Analysis**: [analysis]
+      - **Link**: [https://link1](https://link1)
+      - **Link**: [https://link2](https://link2)
+    
+    ## Title: Summary
+      - **the Facts**: [facts]
+      - **the Opinions**: [opinions]
+      - **the Analysis**: [analysis]
+      - **Link**: [https://link3](https://link3)
+    
+    # Science
     ...
     ``` // (end of example)
     
