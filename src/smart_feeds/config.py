@@ -22,10 +22,28 @@ def __get_parsed_config() -> dict:
     if os.path.exists(config_path):
         try:
             with open(config_path, "rb") as f:
-                return tomllib.load(f)
+                config_data = tomllib.load(f)
+                _inject_env_vars(config_data)
+                return config_data
         except Exception as e:
             print(f"Warning: Failed to parse {config_path}: {e}")
     return {}
+
+def _inject_env_vars(config_data: dict):
+    """Injects specific configuration settings back into the active environment variables."""
+    # Network proxies
+    network = config_data.get("network", {})
+    for key in ["http_proxy", "https_proxy", "no_proxy"]:
+        if key in network:
+            os.environ[key] = str(network[key])
+            os.environ[key.upper()] = str(network[key])
+            
+    # Auth/Cloud settings
+    auth = config_data.get("auth", {})
+    for key in ["google_api_key", "google_cloud_project", "google_cloud_location",
+                "google_vertexai_project", "google_genai_use_vertexai", "google_vertexai_location"]:
+        if key in auth:
+            os.environ[key.upper()] = str(auth[key])
 
 def _get_setting(section: str, key: str, default: any = None) -> any:
     """Helper to get a setting from TOML first, then default."""

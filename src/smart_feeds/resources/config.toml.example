@@ -3,13 +3,22 @@
 # You can also set explicit paths and models here instead of the environment.
 
 # [api]
+# when running cronjob, the environment variables are a pain to set
+# you can set it here and they will be automatically injected into the environment
+# api key for google ai studio
 # google_api_key = "your-api-key-here"
+
+# the following is for vertex ai
+# google_vertexai_project = "your-gcp-project-id"
+# google_vertexai_location = "global"
+# google_genai_use_vertexai = "true"
 
 # [models]
 # model_id = "gemini-3-flash-preview"
 # image_model_id = "imagen-3.0-generate-001"
 
 # [proxy]
+# same as [api], you can set it here and they will be automatically injected into the environment
 # http_proxy = "http://server:port"
 # https_proxy = "http://server:port"
 

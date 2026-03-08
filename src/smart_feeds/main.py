@@ -491,24 +491,19 @@ def install_cron(
             print(f"Error parsing schedule: {e}")
             return
 
-    # 2. Locate uv and project root
-    uv_path = shutil.which("uv")
-    if not uv_path:
-        # Fallback to absolute path if which fails but we are running via uv
-        uv_path = "/usr/local/bin/uv" # weak guess, better to fail
-        print("Error: `uv` not found in PATH.")
+    # 2. Locate smartfeeds command
+    smartfeeds_path = shutil.which("smartfeeds")
+    if not smartfeeds_path:
+        print("Error: `smartfeeds` not found in PATH. Ensure it is installed (e.g. via `uv tool install`).")
         return
 
-    # Assuming this script is at src/main.py
-    script_path = os.path.abspath(__file__)
-    src_dir = os.path.dirname(script_path)
-    project_root = os.path.dirname(src_dir)
+    workspace_dir = config.get_workspace_dir()
     
     # 3. Construct command
     output_dir = config.get_output_dir()
     # Ensure absolute path for log file
     if not os.path.isabs(output_dir):
-        output_dir = os.path.join(project_root, output_dir)
+        output_dir = os.path.join(workspace_dir, output_dir)
     
     log_file = os.path.join(output_dir, "cron.log")
     
@@ -523,7 +518,7 @@ def install_cron(
     else:
         print("Warning: npx not found in PATH. Ensure it is installed and available or browser tool will FAIL.")
 
-    job_command = f'{env_prefix}cd "{project_root}" && "{uv_path}" run src/main.py run-all > "{log_file}" 2>&1'
+    job_command = f'{env_prefix}"{smartfeeds_path}" -w "{workspace_dir}" run-all > "{log_file}" 2>&1'
     
     # 4. Update Crontab
     try:
