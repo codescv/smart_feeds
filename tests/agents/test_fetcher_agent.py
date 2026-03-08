@@ -13,7 +13,7 @@ def test_get_tools_for_source_rss():
     assert tools[0].__name__ == "fetch_rss_feed"
 
 @patch("smart_feeds.agents.fetcher_agent.Agent")
-def test_create_fetcher_agent(mock_agent_cls, mock_env):
+def test_create_fetcher_agent(mock_agent_cls):
     agent = create_fetcher_agent(source_type="http")
     
     # Verify Agent was initialized
@@ -21,7 +21,7 @@ def test_create_fetcher_agent(mock_agent_cls, mock_env):
     call_args = mock_agent_cls.call_args[1]
     
     assert call_args["name"] == "fetcher_agent"
-    assert call_args["model"] == "gemini-2.0-flash-test" # from mock_env
+    assert call_args["model"] == "gemini-2.0-flash" # default from config.py
     
     # Verify tools include standard + implementation specific
     tool_names = [t.__name__ for t in call_args["tools"]]

@@ -37,7 +37,7 @@ def create_fetcher_agent(
     Goal: Fetch content from sources and save raw items to the raw log.
     """
     if model_id is None:
-        model_id = os.getenv("MODEL_ID", "gemini-2.0-flash")
+        model_id = config.get_model_id()
     
     # Ensure raw logger is available to the agent
     if tools is None:

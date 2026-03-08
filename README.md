@@ -22,7 +22,7 @@ mkdir my-feeds && cd my-feeds
 smartfeeds init
 ```
 
-Then edit `.env`, `sources.toml`, and `interests.md` generated in that directory.
+Then edit `config.toml`, `sources.toml`, and `interests.md` generated in that directory.
 
 Run the curator pipelines:
 
@@ -38,9 +38,10 @@ smartfeeds summarize
 ```
 
 ## Configuration
-- `inputs/sources.toml`: Configure websites and RSS feeds.
-- `inputs/interests.md`: Define your interests for filtering.
-- `.env`: Set environment variables (API keys, etc).
+- `sources.toml`: Configure websites and RSS feeds.
+- `interests.md`: Define your interests for filtering.
+- `config.toml`: Set application settings (model IDs, retry limits, paths).
+- Environment Variables: You can also use system environment variables like `GOOGLE_API_KEY` and `HTTP_PROXY`.
 
 ## Debug
 Use built-in web ui of ADK to debug agents.

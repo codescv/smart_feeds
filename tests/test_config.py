@@ -1,34 +1,43 @@
 import os
 import pytest
+from unittest.mock import patch
 from smart_feeds import config
 
-def test_defaults(monkeypatch):
-    # Ensure no env vars are set that might interfere (clean slate handled by fixture potentially, but being explicit here)
-    monkeypatch.delenv("WORKSPACE_DIR", raising=False)
-    monkeypatch.delenv("INPUT_DIR", raising=False)
-    monkeypatch.delenv("OUTPUT_DIR", raising=False)
-    
-    assert config.get_workspace_dir() == "."
-    assert config.get_input_dir() == "./inputs"
-    assert config.get_output_dir() == "./data"
-    assert config.get_retry_max_attempts() == 8
+@pytest.fixture(autouse=True)
+def _clear_cache():
+    config.__get_parsed_config.cache_clear()
+    yield
 
-def test_env_overrides(monkeypatch):
-    monkeypatch.setenv("WORKSPACE_DIR", "/custom/workspace")
-    monkeypatch.setenv("INPUT_DIR", "custom_inputs")
-    monkeypatch.setenv("OUTPUT_DIR", "custom_output")
-    monkeypatch.setenv("RETRY_MAX_ATTEMPTS", "10")
-    
-    assert config.get_workspace_dir() == "/custom/workspace"
-    assert config.get_input_dir() == "/custom/workspace/custom_inputs"
-    assert config.get_output_dir() == "/custom/workspace/custom_output"
-    assert config.get_retry_max_attempts() == 10
+def test_defaults():
+    config.set_workspace_dir(".")
+    with patch("smart_feeds.config.__get_parsed_config", return_value={}):
+        assert config.get_workspace_dir() == os.path.abspath(".")
+        assert config.get_output_dir() == os.path.join(os.path.abspath("."), "data")
+        assert config.get_retry_max_attempts() == 8
 
-def test_absolute_paths(monkeypatch):
-    monkeypatch.setenv("INPUT_DIR", "/abs/path/inputs")
-    assert config.get_input_dir() == "/abs/path/inputs"
+def test_config_overrides():
+    config.set_workspace_dir("/custom/workspace")
+    mock_config = {
+        "paths": {"output_dir": "custom_output"},
+        "settings": {"retry_max_attempts": 10}
+    }
+    with patch("smart_feeds.config.__get_parsed_config", return_value=mock_config):
+        assert config.get_workspace_dir() == os.path.abspath("/custom/workspace")
+        assert config.get_output_dir() == os.path.join(os.path.abspath("/custom/workspace"), "custom_output")
+        assert config.get_retry_max_attempts() == 10
 
-def test_browser_user_data_dir(monkeypatch):
-    monkeypatch.setenv("BROWSER_USER_DATA_DIR", "custom_browser")
-    monkeypatch.setenv("WORKSPACE_DIR", "/tmp")
-    assert config.get_browser_user_data_dir() == "/tmp/custom_browser"
+def test_absolute_paths():
+    config.set_workspace_dir("/custom/workspace")
+    mock_config = {
+        "paths": {"output_dir": "/abs/path/output"}
+    }
+    with patch("smart_feeds.config.__get_parsed_config", return_value=mock_config):
+        assert config.get_output_dir() == "/abs/path/output"
+
+def test_browser_user_data_dir():
+    config.set_workspace_dir("/tmp")
+    mock_config = {
+        "paths": {"browser_user_data_dir": "custom_browser"}
+    }
+    with patch("smart_feeds.config.__get_parsed_config", return_value=mock_config):
+        assert config.get_browser_user_data_dir() == os.path.join(os.path.abspath("/tmp"), "custom_browser")

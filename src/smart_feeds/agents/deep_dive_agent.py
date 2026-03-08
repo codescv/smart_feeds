@@ -11,9 +11,9 @@ def create_deep_dive_agent(model_id=None, debug: bool = False):
     Goal: Read daily summary, visit links, and generate a detailed analysis.
     """
     if model_id is None:
-        model_id = os.getenv("MODEL_ID", "gemini-2.0-flash")
+        model_id = config.get_model_id()
     
-    output_language = os.getenv("OUTPUT_LANGUAGE", "English")
+    output_language = config._get_setting("settings", "output_language", default="English")
 
     # Tools
     tools = []

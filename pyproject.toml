@@ -13,7 +13,6 @@ dependencies = [
     "httpx",
     "playwright>=1.58.0",
     "python-crontab>=3.0.0",
-    "python-dotenv>=1.2.1",
     "typer>=0.23.2",
 ]
 

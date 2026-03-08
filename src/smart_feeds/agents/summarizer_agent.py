@@ -1,4 +1,5 @@
 import os
+from smart_feeds import config
 from google.adk.agents import Agent
 from smart_feeds.tools.storage import read_curated_log, save_daily_summary, get_current_date_str
 
@@ -8,9 +9,9 @@ def create_summarizer_agent(model_id=None):
     Goal: Read curated details and generate a curated daily newspaper (TLDR).
     """
     if model_id is None:
-        model_id = os.getenv("MODEL_ID", "gemini-2.0-flash")
+        model_id = config.get_model_id()
         
-    output_language = os.getenv("OUTPUT_LANGUAGE", "English")
+    output_language = config._get_setting("settings", "output_language", default="English")
 
     instruction = f"""
     You are a TLDR Editor Agent.

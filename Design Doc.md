@@ -9,7 +9,7 @@ The system follows a modular agentic architecture powered by Google ADK (Agent D
 2.  **Summarizer Agent**: Responsible for synthesizing the logged items into a cohesive daily summary.
 
 ### High-Level Data Flow
-1.  **Input**: User defines sources in `sources.toml` and interests in `interests.md`.
+1.  **Input**: User defines sources in `sources.toml` and interests in `interests.md` in their workspace directory.
 2.  **Fetch Phase**: `smartfeeds fetch` iterates through sources.
     *   For each source, the **Fetcher Agent** is instantiated.
     *   The agent uses **Tools** (Browser or RSS) to get content.
@@ -78,7 +78,8 @@ Built with `typer`, it provides the following commands exposed via the `smartfee
 ## 4. Configuration
 
 ### 4.1 Inputs
-*   `inputs/sources.toml`: Configuration file for sources.
+Workspace configuration files:
+*   `sources.toml`: Configuration file for sources.
     ```toml
     # Example
     websites = [
@@ -89,23 +90,22 @@ Built with `typer`, it provides the following commands exposed via the `smartfee
         "https://feeds.feedburner.com/PythonInsider"
     ]
     ```
-*   `inputs/interests.md`: Natural language description of what the user cares about (and what to ignore).
-*   `inputs/browser/`: Directory storing browser profile (cookies, local storage) for persistent sessions.
-
-### 4.2 Environment Variables (`.env`)
-*   `GOOGLE_API_KEY`: For Gemini access.
-*   `MODEL_ID`: specific model version (default: `gemini-2.0-flash`).
-*   `BROWSER_USER_DATA_DIR`: Custom path for browser profile.
-*   `OUTPUT_LANGUAGE`: Language for the final summary (e.g., "English", "Chinese").
+*   `interests.md`: Natural language description of what the user cares about (and what to ignore).
+*   `config.toml`: Settings governing the core agent logic:
+    *   `model_id`: specific model version (default: `gemini-2.0-flash`).
+    *   `output_language`: Language for the final summary (e.g., "English", "Chinese").
+    *   `browser_user_data_dir`: Override path for browser profile.
+*   Environment Variables:
+    *   `GOOGLE_API_KEY`: For Gemini access.
+    *   `HTTP_PROXY` / `HTTPS_PROXY`: For proxy routing.
 
 ## 5. Directory Structure
 ```
 .
-├── .env                  # Secrets
-├── inputs/
-│   ├── sources.toml      # Source definitions
-│   ├── interests.md      # User preferences
-│   └── browser/          # Chrome profile data
+├── config.toml           # App settings
+├── sources.toml          # Source definitions
+├── interests.md          # User preferences
+├── browser/              # Chrome profile data
 ├── data/
 │   ├── details/          # Raw collected items (YYYY-MM-DD.md)
 │   └── tldr/             # Final summaries (YYYY-MM-DD.md)

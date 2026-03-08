@@ -3,7 +3,6 @@ import logging
 import os
 import tomllib
 import asyncio
-from dotenv import load_dotenv
 from smart_feeds import config
 from smart_feeds.tools.mcp_browser import configure_browser_session, get_browser_toolset
 from smart_feeds.tools.rss import fetch_rss_feed
@@ -21,9 +20,6 @@ from smart_feeds.agents.deep_dive_agent import create_deep_dive_agent
 from google.adk.runners import Runner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
 
-# Load environment variables
-load_dotenv()
-
 # Configure logging
 logging.basicConfig(
     level=logging.ERROR, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -34,9 +30,23 @@ from typing import Optional, List, Any
 
 app = typer.Typer()
 
-
 from pathlib import Path
 import shutil
+
+@app.callback()
+def main(
+    workspace: str = typer.Option(
+        ".",
+        "--workspace", "-w",
+        help="Path to the workspace directory. Defaults to the current directory."
+    )
+):
+    """
+    Smart Feeds CLI. 
+    A personal content curator agent that fetches content from websites and RSS feeds.
+    """
+    # Enforce workspace path
+    config.set_workspace_dir(workspace)
 
 @app.command()
 def configure_browser():
@@ -56,11 +66,12 @@ def init():
     import importlib.resources as pkg_resources
     
     # We need to copy files from the smart_feeds.resources package
-    print("Initializing Smart Feeds workspace...")
-    current_dir = Path.cwd()
+    print(f"Initializing Smart Feeds workspace at {config.get_workspace_dir()}...")
+    current_dir = Path(config.get_workspace_dir())
+    current_dir.mkdir(parents=True, exist_ok=True)
     
     files_to_copy = {
-        ".env.example": ".env",
+        "config.toml.example": "config.toml",
         "sources.toml.example": "sources.toml",
         "interests.md.example": "interests.md"
     }
@@ -79,7 +90,7 @@ def init():
                 
         print("\nWorkspace initialized successfully!")
         print("Next steps:")
-        print("1. Edit .env to add your API keys")
+        print("1. Edit config.toml (or set env vars) to add your API keys")
         print("2. Edit sources.toml to configure your feeds")
         print("3. Edit interests.md to set your preferences")
         print("4. Run `smartfeeds fetch` to start hunting for content")
@@ -454,7 +465,7 @@ def install_cron(
             print(f"Interpreting schedule: '{spec}'...")
             client = genai.Client()
             if not model:
-                model = os.getenv("MODEL_ID", "gemini-2.0-flash")
+                model = config.get_model_id()
             
             prompt = (
                 f"Convert the following schedule description into a standard cron expression (5 fields).\n"

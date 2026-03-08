@@ -1,0 +1,30 @@
+# Smart Feeds Configuration File (config.toml)
+# Variables commented out are optional and can be inherited from your environment.
+# You can also set explicit paths and models here instead of the environment.
+
+# [api]
+# google_api_key = "your-api-key-here"
+
+# [models]
+# model_id = "gemini-3-flash-preview"
+# image_model_id = "imagen-3.0-generate-001"
+
+# [proxy]
+# http_proxy = "http://server:port"
+# https_proxy = "http://server:port"
+
+# [settings]
+# output_language = "Chinese"
+# retry_max_attempts = 8
+# retry_delay_seconds = 5.0
+
+# [paths]
+# Directory for browser profile (default: "browser" in workspace)
+# browser_user_data_dir = "/path/to/your/browser/data"
+
+# Directory for output final summaries and raw logs (default: "data" in workspace)
+# output_dir = "notes/Feeds"
+
+# Note: Workspace base directory is assumed to be the directory where you run `smartfeeds`,
+# but it can be overridden if needed:
+# workspace_dir = "/path/to/workspace"

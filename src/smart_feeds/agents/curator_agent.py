@@ -13,13 +13,13 @@ def create_curator_agent(model_id=None):
     Goal: Read raw items, filter by user interest, and save to the curated log.
     """
     if model_id is None:
-        model_id = os.getenv("MODEL_ID", "gemini-2.0-flash")
+        model_id = config.get_model_id()
         
-    output_language = os.getenv("OUTPUT_LANGUAGE", "English")
+    output_language = config._get_setting("settings", "output_language", default="English")
 
     # Load interests
     # Assuming running from project root
-    interests_path = os.path.join(config.get_input_dir(), "interests.md")
+    interests_path = os.path.join(config.get_workspace_dir(), "interests.md")
     interests_content = "No specific interests provided."
     if os.path.exists(interests_path):
         with open(interests_path, "r") as f:

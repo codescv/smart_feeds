@@ -15,8 +15,4 @@ wheels/
 .adk
 
 # User data and config files
-inputs/
-data/
-.env
-
 private/
