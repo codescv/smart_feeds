@@ -26,3 +26,5 @@ src/
 - `dotenv`寻找`.env`的逻辑很奇怪, 当安装成一个脚本时,它有时不会从当前目录加载.env文件
 - `dotenv`似乎也不好设置数据类型 (例如数组)
 - 所以我比较倾向于用toml来管理配置, 并且把example文件放在resources里
+- cronjob的environment variable也很麻烦, 如果不想在cronjob来source一堆文件或者export一堆variable, 
+  那么可以用inject的方式把toml里的变量注入到environment variable里

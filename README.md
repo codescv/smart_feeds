@@ -36,6 +36,16 @@ smartfeeds curate
 # Run summary
 smartfeeds summarize
 ```
+## Scheduling
+
+You can automatically run the full pipeline (fetch, curate, summarize) on a recurring schedule by installing a cron job:
+
+```bash
+# Provide a natural language description of your schedule
+smartfeeds install-cron "every day at 8 AM"
+```
+
+This will parse your request into a valid cron expression and install it to your user's crontab for the current workspace. Ensure you are in your workspace directory or use the `-w` flag.
 
 ## Configuration
 - `sources.toml`: Configure websites and RSS feeds.
