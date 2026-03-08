@@ -1,5 +1,5 @@
 import os
-import config
+from smart_feeds import config
 import logging
 import asyncio
 import subprocess

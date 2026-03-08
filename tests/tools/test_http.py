@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from tools.http import fetch_website_content
+from smart_feeds.tools.http import fetch_website_content
 
 def test_fetch_website_content_success():
     mock_response = MagicMock()

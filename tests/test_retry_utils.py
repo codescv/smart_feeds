@@ -2,7 +2,7 @@ import pytest
 import asyncio
 import time
 from unittest.mock import MagicMock
-from retry_utils import is_retryable_error, run_with_retry, run_with_retry_sync, retry_async, retry_sync
+from smart_feeds.retry_utils import is_retryable_error, run_with_retry, run_with_retry_sync, retry_async, retry_sync
 
 class ResourceExhaustedError(Exception):
     def __str__(self):

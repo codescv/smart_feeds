@@ -1,6 +1,6 @@
 import hashlib
 import os
-import config
+from smart_feeds import config
 from typing import List, Dict, Any, Set
 
 def _get_seen_urls_path() -> str:

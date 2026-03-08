@@ -18,3 +18,5 @@ wheels/
 inputs/
 data/
 .env
+
+private/

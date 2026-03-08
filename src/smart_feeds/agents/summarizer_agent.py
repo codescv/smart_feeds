@@ -1,6 +1,6 @@
 import os
 from google.adk.agents import Agent
-from tools.storage import read_curated_log, save_daily_summary, get_current_date_str
+from smart_feeds.tools.storage import read_curated_log, save_daily_summary, get_current_date_str
 
 def create_summarizer_agent(model_id=None):
     """

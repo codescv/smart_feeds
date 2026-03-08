@@ -1,7 +1,7 @@
 import os
-import config
+from smart_feeds import config
 from google.adk.agents import Agent
-from tools.storage import (
+from smart_feeds.tools.storage import (
     read_raw_items_batch, 
     append_to_curated_log, 
     append_to_filtered_log

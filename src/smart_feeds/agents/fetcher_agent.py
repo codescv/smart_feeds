@@ -1,16 +1,16 @@
 import os
-import config
+from smart_feeds import config
 from typing import Optional, List, Any
 from google.adk.agents import Agent
-from tools.storage import append_to_raw_log
-from tools.rss import fetch_rss_feed
-from tools.http import fetch_website_content
+from smart_feeds.tools.storage import append_to_raw_log
+from smart_feeds.tools.rss import fetch_rss_feed
+from smart_feeds.tools.http import fetch_website_content
 
 def get_tools_for_source(source_type: str, debug: bool = False) -> List[Any]:
     tools = []
     if source_type == "browser":
         # Lazy import to avoid circular dependencies or unnecessary imports
-        from tools.mcp_browser import get_browser_toolset
+        from smart_feeds.tools.mcp_browser import get_browser_toolset
         user_data_dir = config.get_browser_user_data_dir()
         # If debug is True, headless is False (browser is visible)
         browser_toolset = get_browser_toolset(user_data_dir=user_data_dir, headless=not debug)
@@ -20,7 +20,7 @@ def get_tools_for_source(source_type: str, debug: bool = False) -> List[Any]:
     elif source_type == "rss_text":
         tools.append(fetch_rss_feed)
     elif source_type == "rss_audio":
-        # from tools.audio import transcribe_audio_url
+        # from smart_feeds.tools.audio import transcribe_audio_url
         tools.append(fetch_rss_feed)
         # tools.append(transcribe_audio_url)
 
@@ -49,7 +49,7 @@ def create_fetcher_agent(
         tools.append(append_to_raw_log)
 
     # deduplicate_items tool
-    from tools.dedup import deduplicate_items
+    from smart_feeds.tools.dedup import deduplicate_items
     if deduplicate_items not in tools:
         tools.append(deduplicate_items)
 

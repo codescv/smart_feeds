@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from tools.rss import fetch_rss_feed
+from smart_feeds.tools.rss import fetch_rss_feed
 
 def test_fetch_rss_feed_success():
     mock_feed = MagicMock()

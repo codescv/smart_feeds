@@ -6,8 +6,8 @@ import re
 # Add src to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
-import config
-from tools.dedup import _compute_hash, _append_hashes, _get_seen_urls_path
+from smart_feeds import config
+from smart_feeds.tools.dedup import _compute_hash, _append_hashes, _get_seen_urls_path
 
 def backfill_pd():
     """

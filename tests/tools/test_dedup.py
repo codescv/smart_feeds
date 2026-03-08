@@ -1,8 +1,8 @@
 import pytest
 import os
 from unittest.mock import MagicMock, patch, mock_open
-from tools.dedup import deduplicate_items, _get_seen_urls_path
-from tools.dedup import _compute_hash
+from smart_feeds.tools.dedup import deduplicate_items, _get_seen_urls_path
+from smart_feeds.tools.dedup import _compute_hash
 
 def test_deduplicate_items(mock_env):
     items = [
@@ -28,11 +28,11 @@ def test_deduplicate_with_existing(mock_env):
     
     # Check what hash dedup uses (md5 first 8 chars)
     # http://example.com/1 -> md5 -> ...
-    from tools.dedup import _compute_hash
+    from smart_feeds.tools.dedup import _compute_hash
     hash1 = _compute_hash("http://example.com/1")
     
-    with patch("tools.dedup._load_seen_hashes", return_value={hash1}), \
-         patch("tools.dedup._append_hashes") as mock_append:
+    with patch("smart_feeds.tools.dedup._load_seen_hashes", return_value={hash1}), \
+         patch("smart_feeds.tools.dedup._append_hashes") as mock_append:
         
         unique = deduplicate_items(items)
         assert len(unique) == 1

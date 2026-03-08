@@ -1,6 +1,6 @@
 import os
 import datetime
-import config
+from smart_feeds import config
 import re
 import html2text
 from typing import List, Dict, Set, Optional

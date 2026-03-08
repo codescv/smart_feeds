@@ -4,26 +4,37 @@ A personal content curator agent that fetches content from websites and RSS feed
 
 ## Setup
 
-This project uses `uv` for dependency management.
+It is recommended to install Smart Feeds directly via `uv tool`:
 
 ```bash
-# Install dependencies
-uv sync
+# Install globally
+uv tool install git+https://github.com/yourusername/smart_feeds.git
+# Or if developing locally:
+# uv tool install -e .
 ```
 
 ## Usage
 
-Run the curator:
+First, initialize a new workspace directory to hold your config and data:
+
+```bash
+mkdir my-feeds && cd my-feeds
+smartfeeds init
+```
+
+Then edit `.env`, `sources.toml`, and `interests.md` generated in that directory.
+
+Run the curator pipelines:
 
 ```bash
 # Run batch processing (fetch)
-uv run src/main.py fetch
+smartfeeds fetch
 
 # Run filtering
-uv run src/main.py curate
+smartfeeds curate
 
 # Run summary
-uv run src/main.py summarize
+smartfeeds summarize
 ```
 
 ## Configuration

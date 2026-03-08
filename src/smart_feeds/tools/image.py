@@ -1,7 +1,7 @@
 import os
 import base64
 from typing import Optional
-import config
+from smart_feeds import config
 from google import genai
 from google.genai import types
 

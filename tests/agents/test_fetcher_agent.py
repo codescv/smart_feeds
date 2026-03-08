@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from agents.fetcher_agent import create_fetcher_agent, get_tools_for_source
+from smart_feeds.agents.fetcher_agent import create_fetcher_agent, get_tools_for_source
 
 def test_get_tools_for_source_http():
     tools = get_tools_for_source("http")
@@ -12,7 +12,7 @@ def test_get_tools_for_source_rss():
     assert len(tools) == 1
     assert tools[0].__name__ == "fetch_rss_feed"
 
-@patch("agents.fetcher_agent.Agent")
+@patch("smart_feeds.agents.fetcher_agent.Agent")
 def test_create_fetcher_agent(mock_agent_cls, mock_env):
     agent = create_fetcher_agent(source_type="http")
     

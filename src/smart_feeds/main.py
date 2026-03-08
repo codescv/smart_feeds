@@ -4,19 +4,19 @@ import os
 import tomllib
 import asyncio
 from dotenv import load_dotenv
-import config
-from tools.mcp_browser import configure_browser_session, get_browser_toolset
-from tools.rss import fetch_rss_feed
-from tools.http import fetch_website_content
-from tools.storage import append_to_raw_log, read_daily_summary, get_cover_path
-from tools.image import generate_image
-from retry_utils import retry_async, retry_sync
+from smart_feeds import config
+from smart_feeds.tools.mcp_browser import configure_browser_session, get_browser_toolset
+from smart_feeds.tools.rss import fetch_rss_feed
+from smart_feeds.tools.http import fetch_website_content
+from smart_feeds.tools.storage import append_to_raw_log, read_daily_summary, get_cover_path
+from smart_feeds.tools.image import generate_image
+from smart_feeds.retry_utils import retry_async, retry_sync
 
 # Import new agents
-from agents.fetcher_agent import create_fetcher_agent
-from agents.curator_agent import create_curator_agent
-from agents.summarizer_agent import create_summarizer_agent
-from agents.deep_dive_agent import create_deep_dive_agent
+from smart_feeds.agents.fetcher_agent import create_fetcher_agent
+from smart_feeds.agents.curator_agent import create_curator_agent
+from smart_feeds.agents.summarizer_agent import create_summarizer_agent
+from smart_feeds.agents.deep_dive_agent import create_deep_dive_agent
 
 from google.adk.runners import Runner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
@@ -35,6 +35,9 @@ from typing import Optional, List, Any
 app = typer.Typer()
 
 
+from pathlib import Path
+import shutil
+
 @app.command()
 def configure_browser():
     """
@@ -42,6 +45,46 @@ def configure_browser():
     """
     user_data_dir = config.get_browser_user_data_dir()
     configure_browser_session(user_data_dir=user_data_dir)
+
+
+@app.command()
+def init():
+    """
+    Initializes a new Smart Feeds workspace in the current directory.
+    Copies template configuration files if they don't already exist.
+    """
+    import importlib.resources as pkg_resources
+    
+    # We need to copy files from the smart_feeds.resources package
+    print("Initializing Smart Feeds workspace...")
+    current_dir = Path.cwd()
+    
+    files_to_copy = {
+        ".env.example": ".env",
+        "sources.toml.example": "sources.toml",
+        "interests.md.example": "interests.md"
+    }
+    
+    try:
+        # Access the resources directory inside the installed package
+        from smart_feeds import resources
+        for src_name, dest_name in files_to_copy.items():
+            dest_path = current_dir / dest_name
+            if not dest_path.exists():
+                with pkg_resources.path(resources, src_name) as src_path:
+                    shutil.copy2(src_path, dest_path)
+                    print(f"Created {dest_name}")
+            else:
+                print(f"Skipped {dest_name} (already exists)")
+                
+        print("\nWorkspace initialized successfully!")
+        print("Next steps:")
+        print("1. Edit .env to add your API keys")
+        print("2. Edit sources.toml to configure your feeds")
+        print("3. Edit interests.md to set your preferences")
+        print("4. Run `smartfeeds fetch` to start hunting for content")
+    except Exception as e:
+        print(f"Error initializing workspace: {e}")
 
 
 async def process_source(
@@ -143,7 +186,7 @@ async def run_curate(model_id: Optional[str] = None, debug: bool = False):
     print("\n>>> Starting Curation (Filtering & Ranking)")
     
     # 1. Get total count of raw items
-    from tools.storage import get_raw_item_count
+    from smart_feeds.tools.storage import get_raw_item_count
     total_items = get_raw_item_count()
     print(f"Total raw items to process: {total_items}")
     

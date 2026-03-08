@@ -1,6 +1,6 @@
 import os
 import pytest
-import config
+from smart_feeds import config
 
 def test_defaults(monkeypatch):
     # Ensure no env vars are set that might interfere (clean slate handled by fixture potentially, but being explicit here)

@@ -1,9 +1,9 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from agents.summarizer_agent import create_summarizer_agent
+from smart_feeds.agents.summarizer_agent import create_summarizer_agent
 import datetime
 
-@patch("agents.summarizer_agent.Agent")
+@patch("smart_feeds.agents.summarizer_agent.Agent")
 def test_create_summarizer_agent(mock_agent_cls, mock_env):
     agent = create_summarizer_agent()
     

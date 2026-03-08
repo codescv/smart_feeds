@@ -10,26 +10,27 @@ The system follows a modular agentic architecture powered by Google ADK (Agent D
 
 ### High-Level Data Flow
 1.  **Input**: User defines sources in `sources.toml` and interests in `interests.md`.
-2.  **Fetch Phase**: `main.py` iterates through sources.
+2.  **Fetch Phase**: `smartfeeds fetch` iterates through sources.
     *   For each source, the **Fetcher Agent** is instantiated.
     *   The agent uses **Tools** (Browser or RSS) to get content.
     *   The agent evaluates relevance against `interests.md`.
     *   Relevant items are appended to `data/details/YYYY-MM-DD.md`.
-3.  **Summarize Phase**: `main.py` triggers the **Summarizer Agent**.
+3.  **Summarize Phase**: `smartfeeds summarize` triggers the **Summarizer Agent**.
     *   The agent reads `data/details/YYYY-MM-DD.md`.
     *   The agent groups and summarizes items.
     *   The final output is saved to `data/tldr/YYYY-MM-DD.md`.
 
 ## 3. Components
 
-### 3.1 CLI Entry Point (`src/main.py`)
-Built with `typer`, it provides the following commands:
+### 3.1 CLI Entry Point (`src/smart_feeds/main.py`)
+Built with `typer`, it provides the following commands exposed via the `smartfeeds` executable:
+*   `init`: Scaffolds a new workspace with template configuration files.
 *   `fetch`: Triggers the batch fetching process for all configured sources.
 *   `summarize`: Triggers the daily summarization process.
 *   `configure-browser`: Launches a visible browser instance for the user to handle authentication (e.g., logging into Twitter/X).
 *   `webui`: Launches an interactive chat loop for debugging.
 
-### 3.2 Agents (`src/agents/agent.py`)
+### 3.2 Agents (`src/smart_feeds/agents/agent.py`)
 
 #### Fetcher Agent
 *   **Role**: Content acquisition and filtering.
@@ -57,17 +58,17 @@ Built with `typer`, it provides the following commands:
 
 ### 3.3 Tools
 
-#### MCP Browser (`src/tools/mcp_browser.py`)
+#### MCP Browser (`src/smart_feeds/tools/mcp_browser.py`)
 *   Wraps the `@playwright/mcp` server.
 *   Manages the browser lifecycle (headed vs headless).
 *   Handles user data directory persistence to maintain login sessions.
 
-#### RSS Fetcher (`src/tools/rss.py`)
+#### RSS Fetcher (`src/smart_feeds/tools/rss.py`)
 *   Uses `feedparser` to fetch standard RSS/Atom feeds.
 *   Returns normalized list of items (title, link, summary, published date).
 *   Respects `HTTP_PROXY` if configured.
 
-#### Storage (`src/tools/storage.py`)
+#### Storage (`src/smart_feeds/tools/storage.py`)
 *   **Details Log**: `data/details/YYYY-MM-DD.md`
     *   Format: Markdown with finding details.
     *   Deduplication: Checks existing URLs in the file to prevent duplicate entries within the same day.
@@ -109,9 +110,10 @@ Built with `typer`, it provides the following commands:
 │   ├── details/          # Raw collected items (YYYY-MM-DD.md)
 │   └── tldr/             # Final summaries (YYYY-MM-DD.md)
 ├── src/
-│   ├── main.py           # CLI entry point
-│   ├── agents/           # Agent definitions
-│   └── tools/            # Tool definitions (browser, rss, storage)
+│   └── smart_feeds/      # Package source
+│       ├── main.py       # CLI entry point
+│       ├── agents/       # Agent definitions
+│       └── tools/        # Tool definitions (browser, rss, storage)
 └── ...
 ```
 

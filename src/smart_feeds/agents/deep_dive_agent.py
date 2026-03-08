@@ -1,8 +1,8 @@
 import os
-import config
+from smart_feeds import config
 from typing import Optional, List, Any
 from google.adk.agents import Agent
-from tools.storage import read_daily_summary, save_deep_dive_report
+from smart_feeds.tools.storage import read_daily_summary, save_deep_dive_report
 
 
 def create_deep_dive_agent(model_id=None, debug: bool = False):
@@ -24,7 +24,7 @@ def create_deep_dive_agent(model_id=None, debug: bool = False):
     
     # 2. Browser tools
     # Lazy import to avoid circular dependencies
-    from tools.mcp_browser import get_browser_toolset
+    from smart_feeds.tools.mcp_browser import get_browser_toolset
     user_data_dir = config.get_browser_user_data_dir()
     # If debug is True, headless is False (browser is visible)
     browser_toolset = get_browser_toolset(user_data_dir=user_data_dir, headless=not debug)

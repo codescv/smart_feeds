@@ -1,5 +1,5 @@
 import pytest
-from tools.storage import _clean_title, _clean_html_to_markdown, _extract_urls_from_markdown
+from smart_feeds.tools.storage import _clean_title, _clean_html_to_markdown, _extract_urls_from_markdown
 
 def test_clean_title():
     assert _clean_title("<b>Hello</b> World") == "**Hello** World"
