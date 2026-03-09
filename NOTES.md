@@ -22,6 +22,10 @@ src/
 ```
 这样的话可以很方便的安装成一个脚本, 并且package不会跟别的包冲突
 
+# cronjob里的各种坑
+- environment variable是和普通shell不一致的, 如果要模拟出一个和cronjob一样的shell, 可以用`env -i /bin/sh`. 然后测试你的命令是否正常运行
+- 常见缺少的变量: GOOGLE_VERTEX_... 还有`gcloud`的运行路径(不知道为什么有些sdk非要这个路径)
+
 # dotenv
 - `dotenv`寻找`.env`的逻辑很奇怪, 当安装成一个脚本时,它有时不会从当前目录加载.env文件
 - `dotenv`似乎也不好设置数据类型 (例如数组)

@@ -17,10 +17,11 @@
 # model_id = "gemini-3-flash-preview"
 # image_model_id = "imagen-3.0-generate-001"
 
-# [proxy]
+# [network]
 # same as [api], you can set it here and they will be automatically injected into the environment
 # http_proxy = "http://server:port"
 # https_proxy = "http://server:port"
+# no_proxy = "127.0.0.1,localhost"
 
 # [settings]
 # output_language = "Chinese"

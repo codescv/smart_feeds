@@ -15,6 +15,10 @@ def get_workspace_dir() -> str:
     """Returns the workspace directory path."""
     return _workspace_dir
 
+def init_config():
+    """Explicitly initializes the configuration to inject env vars early."""
+    __get_parsed_config()
+
 @lru_cache(maxsize=1)
 def __get_parsed_config() -> dict:
     """Reads and parses the config.toml file once."""

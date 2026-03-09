@@ -47,6 +47,8 @@ smartfeeds install-cron "every day at 8 AM"
 
 This will parse your request into a valid cron expression and install it to your user's crontab for the current workspace. Ensure you are in your workspace directory or use the `-w` flag.
 
+Note: in macOS, may need to approve several popups for cronjob to work.
+
 ## Configuration
 - `sources.toml`: Configure websites and RSS feeds.
 - `interests.md`: Define your interests for filtering.

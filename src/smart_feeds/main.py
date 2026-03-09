@@ -46,7 +46,9 @@ def main(
     A personal content curator agent that fetches content from websites and RSS feeds.
     """
     # Enforce workspace path
+    # This is called no matter user passes workspace or not.
     config.set_workspace_dir(workspace)
+    config.init_config()
 
 @app.command()
 def configure_browser():
@@ -507,16 +509,27 @@ def install_cron(
     
     log_file = os.path.join(output_dir, "cron.log")
     
-    # Prepend npx path to PATH to ensure it's found (essential for browser tool)
+    # Prepend paths to PATH to ensure they are found by cron
+    paths_to_prepend = []
+    
     npx_path = shutil.which("npx")
-    env_prefix = ""
     if npx_path:
-        npx_dir = os.path.dirname(npx_path)
-        # We prepend to PATH
-        env_prefix = f'export PATH="{npx_dir}:$PATH" && '
+        paths_to_prepend.append(os.path.dirname(npx_path))
         print(f"Detected npx at: {npx_path}")
     else:
         print("Warning: npx not found in PATH. Ensure it is installed and available or browser tool will FAIL.")
+
+    gcloud_path = shutil.which("gcloud")
+    if gcloud_path:
+        paths_to_prepend.append(os.path.dirname(gcloud_path))
+        print(f"Detected gcloud at: {gcloud_path}")
+    else:
+        print("Warning: gcloud not found in PATH. Ensure it is installed and available or google adk will FAIL.")
+
+    env_prefix = ""
+    if paths_to_prepend:
+        path_str = ":".join(paths_to_prepend)
+        env_prefix = f'export PATH="{path_str}:$PATH" && '
 
     job_command = f'{env_prefix}"{smartfeeds_path}" -w "{workspace_dir}" run-all > "{log_file}" 2>&1'
     
