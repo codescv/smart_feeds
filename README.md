@@ -8,7 +8,7 @@ It is recommended to install Smart Feeds directly via `uv tool`:
 
 ```bash
 # Install globally
-uv tool install git+https://github.com/yourusername/smart_feeds.git
+uv tool install git+https://github.com/codescv/smart_feeds.git
 # Or if developing locally:
 # uv tool install -e .
 ```
