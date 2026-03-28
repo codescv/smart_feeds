@@ -95,6 +95,7 @@ Workspace configuration files:
     *   `model_id`: specific model version (default: `gemini-2.0-flash`).
     *   `output_language`: Language for the final summary (e.g., "English", "Chinese").
     *   `browser_user_data_dir`: Override path for browser profile.
+    *   `custom_prompt_path`: Optional path to a markdown file (absolute or relative to workspace) to use as the summarizer prompt instead of the hardcoded one.
 *   Environment Variables:
     *   `GOOGLE_API_KEY`: For Gemini access.
     *   `HTTP_PROXY` / `HTTPS_PROXY`: For proxy routing.

@@ -52,7 +52,7 @@ Note: in macOS, may need to approve several popups for cronjob to work.
 ## Configuration
 - `sources.toml`: Configure websites and RSS feeds.
 - `interests.md`: Define your interests for filtering.
-- `config.toml`: Set application settings (model IDs, retry limits, paths).
+- `config.toml`: Set application settings (model IDs, retry limits, paths, and optional `custom_prompt_path` for summarizer).
 - Environment Variables: You can also use system environment variables like `GOOGLE_API_KEY` and `HTTP_PROXY`.
 
 ## Debug

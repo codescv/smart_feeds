@@ -127,6 +127,16 @@ def create_summarizer_agent(model_id=None):
     If there are special terms, you can list the term in the original language with in a bracket.
     """
 
+    custom_prompt_path = config._get_setting("settings", "custom_prompt_path")
+    if custom_prompt_path:
+        if not os.path.isabs(custom_prompt_path):
+            custom_prompt_path = os.path.join(config.get_workspace_dir(), custom_prompt_path)
+        if os.path.exists(custom_prompt_path):
+            with open(custom_prompt_path, "r", encoding="utf-8") as f:
+                instruction = f.read()
+        else:
+            print(f"Warning: Custom prompt file not found at {custom_prompt_path}")
+
     agent = Agent(
         name="summarizer_agent",
         model=model_id,
