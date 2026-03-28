@@ -28,3 +28,8 @@ dev = [
 
 [project.scripts]
 smartfeeds = "smart_feeds.main:app"
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true
