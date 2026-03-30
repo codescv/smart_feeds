@@ -3,11 +3,11 @@ name = "smart-feeds"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 dependencies = [
     "beautifulsoup4>=4.12.3",
     "feedparser>=6.0.12",
-    "google-adk>=1.18.0",
+    "google-adk>=1.27.4",
     "google-genai>=1.47.0",
     "html2text>=2025.4.15",
     "httpx",
