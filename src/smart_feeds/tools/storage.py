@@ -336,6 +336,24 @@ def read_daily_summary() -> str:
         return f.read()
 
 
+def read_recent_summaries(days: int = 3) -> str:
+    """Reads daily summaries from the last `days` days (excluding today)."""
+    today = datetime.date.today()
+    summaries = []
+    for d in range(1, days + 1):
+        target_date = today - datetime.timedelta(days=d)
+        filename = os.path.join(config.get_output_dir(), "tldr", f"{target_date.isoformat()}.md")
+        if os.path.exists(filename):
+            with open(filename, "r", encoding="utf-8") as f:
+                content = f.read()
+                summaries.append(f"--- Summary for {target_date.isoformat()} ---\n{content}")
+    
+    if not summaries:
+        return f"No summaries found for the last {days} days."
+        
+    return "\n\n".join(summaries)
+
+
 def _get_deep_dive_path() -> str:
     """Returns the path for today's deep dive report."""
     today = datetime.date.today().isoformat()

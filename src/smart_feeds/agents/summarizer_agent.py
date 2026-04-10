@@ -1,7 +1,7 @@
 import os
 from smart_feeds import config
 from google.adk.agents import Agent
-from smart_feeds.tools.storage import read_curated_log, save_daily_summary, get_current_date_str
+from smart_feeds.tools.storage import read_curated_log, save_daily_summary, get_current_date_str, read_recent_summaries
 
 PERSONA = """
 # Your Persona
@@ -81,16 +81,17 @@ def create_summarizer_agent(model_id=None):
     
     # Workflow
     1. READ: Use `read_curated_log` to get the items for today.
-    2. ORGANIZE: Group items by topic/theme. 
+    2. DEDUP: Use `read_recent_summaries` to read the summaries from last 3 days, and refer to them to dedup today's news.
+    3. ORGANIZE: Group items by topic/theme. 
         - Aim for ~6 diverse topics and ~30 sub-items in total for the final output.
         - Don't add numbers for the topics.
-    3. SYNTHESIZE: Create a cohesive narrative (summary) or list for each topic.
+    4. SYNTHESIZE: Create a cohesive narrative (summary) or list for each topic.
         - Focus on flow, readability, and grouping related stories.
         - Include facts, opinions, and key insights from the original source.
         - Include a professional analysis / comments / point of view. Implications, future outlook,
           or missing context. Use a fair and professional tone.
-    3. GET DATE: Use `get_current_date_str` tool to get the current date.
-    4. SAVE SUMMARY: Generate the markdown summary as instructed below. 
+    5. GET DATE: Use `get_current_date_str` tool to get the current date.
+    6. SAVE SUMMARY: Generate the markdown summary as instructed below. 
         *IMPORTANT*: YOU MUST use `save_daily_summary` tool to save the summary. Don't output it.
     
     # Summary format
@@ -141,7 +142,12 @@ def create_summarizer_agent(model_id=None):
         name="summarizer_agent",
         model=model_id,
         instruction=instruction,
-        tools=[read_curated_log, save_daily_summary, get_current_date_str],
+        tools=[
+            read_curated_log,
+            save_daily_summary,
+            get_current_date_str,
+            read_recent_summaries
+        ],
     )
 
     return agent

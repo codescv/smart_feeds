@@ -582,9 +582,6 @@ def run_all(
     # 3. Summarize
     asyncio.run(run_summarize(model_id=model, debug=debug))
 
-    # 4. Generate Cover
-    generate_cover(model=model, image_model=image_model, debug=debug)
-
     print("Pipeline complete.")
 
 if __name__ == "__main__":
