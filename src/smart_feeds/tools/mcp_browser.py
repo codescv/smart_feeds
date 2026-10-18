@@ -52,18 +52,26 @@ def get_browser_toolset(
     args = _get_mcp_args(headless=headless, user_data_dir=user_data_dir)
     logger.info(f"Initializing Playwright MCP with args: {args}")
 
+    # Pass the full current environment (including DISPLAY, WAYLAND_DISPLAY,
+    # XAUTHORITY, XDG_RUNTIME_DIR) so @playwright/mcp does not fall back to
+    # headless mode on Linux when StdioServerParameters filters env vars.
     return McpToolset(
         connection_params=StdioConnectionParams(
             server_params=StdioServerParameters(
                 command="npx",
                 args=args,
+                env=os.environ.copy(),
             ),
             timeout=600.0,
         )
     )
 
 
-async def _run_configuration_direct(user_data_dir: Optional[str] = None):
+async def _run_configuration_direct(user_data_dir: Optional[str] = None) -> None:
+    """
+    Launches a headed browser session via the Playwright MCP server and waits
+    for the user to complete authentication before closing the session.
+    """
     print("Initializing Browser via MCP...")
     # Initialize toolset in headed mode
     toolset = get_browser_toolset(headless=False, user_data_dir=user_data_dir)
@@ -97,10 +105,13 @@ async def _run_configuration_direct(user_data_dir: Optional[str] = None):
             print(f"Navigating to x.com...")
 
             # Call the tool directly on the session
-            await session.call_tool(
+            nav_result = await session.call_tool(
                 navigate_tool_name, arguments={"url": "https://x.com"}
             )
-            print("Navigation command sent.")
+            if getattr(nav_result, "isError", False):
+                print(f"Warning: Navigation returned an error: {nav_result.content}")
+            else:
+                print("Navigation command sent.")
 
         else:
             print("Could not find a 'navigate' tool. Available tools:")
@@ -122,7 +133,7 @@ async def _run_configuration_direct(user_data_dir: Optional[str] = None):
         await toolset.close()
 
 
-def configure_browser_session(user_data_dir: Optional[str] = None):
+def configure_browser_session(user_data_dir: Optional[str] = None) -> None:
     """
     Launches a browser using the MCP toolset directly.
     """

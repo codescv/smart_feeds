@@ -61,6 +61,7 @@ Built with `typer`, it provides the following commands exposed via the `smartfee
 #### MCP Browser (`src/smart_feeds/tools/mcp_browser.py`)
 *   Wraps the `@playwright/mcp` server.
 *   Manages the browser lifecycle (headed vs headless).
+*   Passes the full process environment (`os.environ.copy()`) into `StdioServerParameters` so desktop display variables (`DISPLAY`, `WAYLAND_DISPLAY`, `XAUTHORITY`, `XDG_RUNTIME_DIR`) are preserved on Linux when launching a headed browser.
 *   Handles user data directory persistence to maintain login sessions.
 
 #### RSS Fetcher (`src/smart_feeds/tools/rss.py`)
