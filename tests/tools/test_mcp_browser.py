@@ -7,7 +7,7 @@ def test_get_mcp_args_headed(monkeypatch) -> None:
     """Verifies MCP CLI arguments in headed mode without proxy."""
     monkeypatch.delenv("HTTP_PROXY", raising=False)
     args = _get_mcp_args(headless=False, user_data_dir="/tmp/test-browser")
-    assert args == ["-y", "@playwright/mcp@latest", "--user-data-dir=/tmp/test-browser"]
+    assert args == ["-y", "@playwright/mcp", "--user-data-dir=/tmp/test-browser"]
 
 
 def test_get_mcp_args_headless_with_proxy(monkeypatch) -> None:
@@ -16,7 +16,7 @@ def test_get_mcp_args_headless_with_proxy(monkeypatch) -> None:
     args = _get_mcp_args(headless=True, user_data_dir="/tmp/test-browser")
     assert args == [
         "-y",
-        "@playwright/mcp@latest",
+        "@playwright/mcp",
         "--proxy-server=http://127.0.0.1:3128",
         "--user-data-dir=/tmp/test-browser",
         "--headless",

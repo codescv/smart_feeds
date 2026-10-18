@@ -21,8 +21,9 @@ def _get_mcp_args(headless: bool, user_data_dir: Optional[str] = None) -> List[s
     """
     proxy_server = os.environ.get("HTTP_PROXY")
 
-    # Construct arguments for npx @playwright/mcp
-    args = ["-y", "@playwright/mcp@latest"]
+    # Construct arguments for npx @playwright/mcp (omit @latest so npx reuses
+    # the local _npx cache instead of re-fetching/downgrading via Airlock).
+    args = ["-y", "@playwright/mcp"]
 
     if proxy_server:
         args.append(f"--proxy-server={proxy_server}")
@@ -55,12 +56,15 @@ def get_browser_toolset(
     # Pass the full current environment (including DISPLAY, WAYLAND_DISPLAY,
     # XAUTHORITY, XDG_RUNTIME_DIR) so @playwright/mcp does not fall back to
     # headless mode on Linux when StdioServerParameters filters env vars.
+    env = os.environ.copy()
+    env.setdefault("NPM_CONFIG_REGISTRY", "https://registry.npmjs.org")
+
     return McpToolset(
         connection_params=StdioConnectionParams(
             server_params=StdioServerParameters(
                 command="npx",
                 args=args,
-                env=os.environ.copy(),
+                env=env,
             ),
             timeout=600.0,
         )
