@@ -1,7 +1,8 @@
-import os
-from smart_feeds import config
-import logging
 import asyncio
+import glob
+import logging
+import os
+import shutil
 import subprocess
 import sys
 from typing import List, Optional
@@ -11,8 +12,37 @@ from google.adk.runners import Runner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
 from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
 from mcp import StdioServerParameters
+from smart_feeds import config
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_npx_command() -> str:
+    """
+    Resolves the persistent path to the npx executable.
+
+    Checks PATH via shutil.which first and resolves symlinks (such as ephemeral
+    fnm_multishells paths) using os.path.realpath. Falls back to standard fnm
+    installation directories when npx is not on PATH (e.g., in cron jobs).
+    """
+    npx_path = shutil.which("npx")
+    if npx_path:
+        return os.path.realpath(npx_path)
+
+    # Fallback 1: check fnm default alias when PATH does not include fnm
+    fnm_default = os.path.expanduser("~/.local/share/fnm/aliases/default/bin/npx")
+    if os.path.exists(fnm_default):
+        return os.path.realpath(fnm_default)
+
+    # Fallback 2: check installed fnm node versions (highest version first)
+    fnm_pattern = os.path.expanduser(
+        "~/.local/share/fnm/node-versions/*/installation/bin/npx"
+    )
+    candidates = sorted(glob.glob(fnm_pattern), reverse=True)
+    if candidates:
+        return os.path.realpath(candidates[0])
+
+    return "npx"
 
 
 def _get_mcp_args(headless: bool, user_data_dir: Optional[str] = None) -> List[str]:
@@ -59,10 +89,18 @@ def get_browser_toolset(
     env = os.environ.copy()
     env.setdefault("NPM_CONFIG_REGISTRY", "https://registry.npmjs.org")
 
+    npx_cmd = _resolve_npx_command()
+    if os.path.isabs(npx_cmd):
+        # Prepend the resolved binary directory so the sibling `node` binary
+        # is also discoverable on PATH when npx executes.
+        npx_dir = os.path.dirname(npx_cmd)
+        current_path = env.get("PATH", "")
+        env["PATH"] = f"{npx_dir}:{current_path}" if current_path else npx_dir
+
     return McpToolset(
         connection_params=StdioConnectionParams(
             server_params=StdioServerParameters(
-                command="npx",
+                command=npx_cmd,
                 args=args,
                 env=env,
             ),
