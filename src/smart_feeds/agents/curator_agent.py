@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 from smart_feeds import config
 from google.adk.agents import Agent
 from smart_feeds.tools.storage import (
@@ -7,7 +8,8 @@ from smart_feeds.tools.storage import (
     append_to_filtered_log
 )
 
-def create_curator_agent(model_id=None):
+
+def create_curator_agent(model_id: Optional[str] = None) -> Agent:
     """
     Creates the Curator Agent.
     Goal: Read raw items, filter by user interest, and save to the curated log.
@@ -17,8 +19,7 @@ def create_curator_agent(model_id=None):
         
     output_language = config._get_setting("settings", "output_language", default="English")
 
-    # Load interests
-    # Assuming running from project root
+    # Load interests from workspace directory
     interests_path = os.path.join(config.get_workspace_dir(), "interests.md")
     interests_content = "No specific interests provided."
     if os.path.exists(interests_path):
@@ -42,10 +43,14 @@ def create_curator_agent(model_id=None):
     4. EXPLAIN:
        - For selected items, generate a `explain` about why it's relevant and
          the full `content` in {output_language} (translate if needed).
-       - For filtered items, provide a `reason` why it was filtered.
+       - For filtered items, provide a concise 1-sentence `reason` why it was filtered (do NOT translate or include `content`).
     5. SAVE: 
        - Use `append_to_curated_log` for SELECTED items.
        - Use `append_to_filtered_log` for FILTERED items.
+
+    Curation Consistency & Source Handling Rules:
+    - Cross-Source Consistency: When multiple items in the same batch cover the same underlying event (e.g., an official blog/TechCrunch article and a Reddit discussion thread), prefer keeping the primary/authoritative source (or both if the community thread adds substantial technical benchmarks) and NEVER filter out an authoritative primary report while keeping a secondary rumor thread.
+    - Hacker News / Discussion Links: If an item's content is just `[Comments](https://news.ycombinator.com/...)` (such as a Hacker News post), evaluate its relevance based on the title and URL domain, and include the HN discussion URL in `content` so downstream agents have both the article URL and the HN comments link.
     
     IMPORTANT: `append_to_curated_log` accepts a LIST of dictionaries.
     Each item must have:
@@ -58,13 +63,13 @@ def create_curator_agent(model_id=None):
     - `content`: full content (translate if needed) in {output_language}.
 
     IMPORTANT: `append_to_filtered_log` accepts a LIST of dictionaries.
-    Each item must have:
+    Each item ONLY needs:
     - `title`: Original title.
     - `url`: Original URL.
     - `source`: Original source.
     - `published`: Original date.
-    - `content`: full content (translate if needed) in {output_language}.
-    - `reason`: Why this item was filtered (e.g., "Irrelevant to user interests", "Duplicate").
+    - `reason`: A concise 1-sentence reason why this item was filtered (e.g., "Irrelevant to user interests", "Duplicate").
+    Do NOT include `content` in `append_to_filtered_log` to avoid wasting output tokens translating and outputting rejected content.
     
     All your output should be in {output_language}.
     """
