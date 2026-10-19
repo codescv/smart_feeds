@@ -1,15 +1,57 @@
 import hashlib
 import os
-from smart_feeds import config
+import urllib.parse
 from typing import List, Dict, Any, Set
+from smart_feeds import config
+
+TRACKING_PARAMS: Set[str] = {
+    "utm_source",
+    "utm_medium",
+    "utm_campaign",
+    "utm_term",
+    "utm_content",
+    "fbclid",
+    "gclid",
+}
+
 
 def _get_seen_urls_path() -> str:
     """Returns the path for the seen URLs hash file."""
     return os.path.join(config.get_output_dir(), "seen_urls.txt")
 
+
+def _normalize_url(url: str) -> str:
+    """
+    Normalizes a URL for deduplication:
+    1. Strips leading/trailing whitespace and trailing '/'.
+    2. Strips common tracking query parameters while preserving meaningful ones.
+    """
+    cleaned = url.strip()
+    if not cleaned:
+        return ""
+
+    try:
+        parsed = urllib.parse.urlsplit(cleaned)
+        # Filter out tracking query parameters while preserving meaningful ones
+        query_params = urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+        filtered_params = [
+            (k, v) for k, v in query_params if k.lower() not in TRACKING_PARAMS
+        ]
+        new_query = urllib.parse.urlencode(filtered_params, doseq=True)
+        normalized_path = parsed.path.rstrip("/")
+        reconstructed = urllib.parse.urlunsplit(
+            (parsed.scheme, parsed.netloc, normalized_path, new_query, parsed.fragment)
+        )
+        return reconstructed.rstrip("/")
+    except Exception:
+        return cleaned.rstrip("/")
+
+
 def _compute_hash(url: str) -> str:
-    """Computes the first 8 characters of the MD5 hash of the URL."""
-    return hashlib.md5(url.encode('utf-8')).hexdigest()[:8]
+    """Normalizes the URL and computes the first 16 characters of its MD5 hash."""
+    normalized = _normalize_url(url)
+    return hashlib.md5(normalized.encode('utf-8')).hexdigest()[:16]
+
 
 def _load_seen_hashes() -> Set[str]:
     """Loads existing hashes from the file."""
@@ -20,7 +62,8 @@ def _load_seen_hashes() -> Set[str]:
     with open(path, "r", encoding="utf-8") as f:
         return {line.strip() for line in f if line.strip()}
 
-def _append_hashes(hashes: List[str]):
+
+def _append_hashes(hashes: List[str]) -> None:
     """Appends new hashes to the file and manages file size."""
     path = _get_seen_urls_path()
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -50,9 +93,11 @@ def _append_hashes(hashes: List[str]):
     except Exception as e:
         print(f"Error rotating hash file: {e}")
 
+
 def deduplicate_items(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Filters out items that have been seen before based on URL hash.
+    Maintains backward compatibility with legacy 8-character hashes.
     Also deduplicates within the current batch.
     """
     seen_hashes = _load_seen_hashes()
@@ -68,8 +113,14 @@ def deduplicate_items(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             continue
             
         url_hash = _compute_hash(url)
+        legacy_raw_hash = hashlib.md5(url.encode('utf-8')).hexdigest()[:8]
         
-        if url_hash in seen_hashes:
+        # Treat as seen if 16-char hash, 8-char normalized hash, or 8-char raw hash matches
+        if (
+            url_hash in seen_hashes
+            or url_hash[:8] in seen_hashes
+            or legacy_raw_hash in seen_hashes
+        ):
             continue
             
         if url_hash in current_batch_hashes:

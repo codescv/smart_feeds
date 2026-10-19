@@ -28,7 +28,10 @@ def fetch_rss_feed(url: str, limit: int = 5) -> List[Dict[str, str]]:
     if feed.bozo:
         logger.warning(f"Error parsing feed {url}: {feed.bozo_exception}")
 
-    items = []
+    raw_feed_title = feed.feed.get("title", "") if hasattr(feed, "feed") else ""
+    feed_title = raw_feed_title if isinstance(raw_feed_title, str) else ""
+
+    items: List[Dict[str, str]] = []
     for entry in feed.entries[:limit]:
         summary = entry.get("summary", "")
         if not isinstance(summary, str):
@@ -46,16 +49,18 @@ def fetch_rss_feed(url: str, limit: int = 5) -> List[Dict[str, str]]:
                 media = link.get("href", "")
                 break
 
-        items.append(
-            {
-                "title": entry.get("title", "No Title"),
-                "link": entry.get("link", ""),
-                "summary": summary,
-                "published": entry.get(
-                    "published", entry.get("updated", "Unknown Date")
-                ),
-                "media": media,
-            }
-        )
+        item: Dict[str, str] = {
+            "title": entry.get("title", "No Title"),
+            "link": entry.get("link", ""),
+            "summary": summary,
+            "published": entry.get(
+                "published", entry.get("updated", "Unknown Date")
+            ),
+            "media": media,
+        }
+        if feed_title:
+            item["source"] = feed_title
+
+        items.append(item)
 
     return items
