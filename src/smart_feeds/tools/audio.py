@@ -4,20 +4,25 @@ import tempfile
 import httpx
 from google import genai
 from google.genai import types
+from smart_feeds import config
 
 logger = logging.getLogger(__name__)
+
 
 def transcribe_audio_url(url: str) -> str:
     """
     Downloads an audio file from a URL and transcribes it using Gemini.
     """
     logger.info(f"Transcribing audio from: {url}")
-    
-    api_key = os.environ.get("GOOGLE_API_KEY")
-    if not api_key:
-        return "Error: GOOGLE_API_KEY not set."
+    config.init_config()
 
-    client = genai.Client(api_key=api_key)
+    if os.environ.get("GOOGLE_GENAI_USE_VERTEXAI", "").lower() == "true":
+        client = genai.Client()
+    else:
+        api_key = os.environ.get("GOOGLE_API_KEY")
+        if not api_key:
+            return "Error: GOOGLE_API_KEY not set."
+        client = genai.Client(api_key=api_key)
 
     try:
         # Download audio to a temp file
@@ -49,8 +54,8 @@ def transcribe_audio_url(url: str) -> str:
         uploaded_file = client.files.upload(path=temp_path)
         
         # 2. Generate content
-        # We use a model that supports audio, e.g. gemini-2.0-flash
-        model_id = os.environ.get("MODEL_ID", "gemini-2.0-flash")
+        # We use the configured model that supports audio
+        model_id = config.get_model_id()
         
         prompt = "Transcribe this audio file. Extract the main topics and a detailed summary of the conversation."
         

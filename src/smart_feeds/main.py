@@ -1,13 +1,19 @@
 import typer
 import logging
 import os
+import glob
+import shutil
 import tomllib
 import asyncio
+import urllib.parse
+from pathlib import Path
+from typing import Optional, List, Dict, Any
 from smart_feeds import config
 from smart_feeds.tools.mcp_browser import configure_browser_session, get_browser_toolset
 from smart_feeds.tools.rss import fetch_rss_feed
 from smart_feeds.tools.http import fetch_website_content
-from smart_feeds.tools.storage import append_to_raw_log, read_daily_summary, get_cover_path
+from smart_feeds.tools.storage import append_to_raw_log, read_daily_summary, get_cover_path, get_raw_item_count
+from smart_feeds.tools.dedup import deduplicate_items
 from smart_feeds.tools.image import generate_image
 from smart_feeds.retry_utils import retry_async, retry_sync
 
@@ -26,12 +32,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from typing import Optional, List, Any
-
 app = typer.Typer()
-
-from pathlib import Path
-import shutil
 
 @app.callback()
 def main(
@@ -100,19 +101,67 @@ def init():
         print(f"Error initializing workspace: {e}")
 
 
+def process_rss_source(source_config: dict) -> None:
+    """
+    Deterministically fetches, deduplicates, and logs items from an RSS feed
+    without invoking the LLM fetcher agent.
+    """
+    url = source_config.get("url", "")
+    source_type = source_config.get("type", "rss_text")
+
+    if "reddit" in url:
+        limit = 30
+    elif source_type == "rss_audio":
+        limit = 3
+    else:
+        limit = 10
+
+    entries = fetch_rss_feed(url, limit=limit)
+    default_source = urllib.parse.urlparse(url).netloc
+
+    mapped_items: List[Dict[str, str]] = []
+    for entry in entries:
+        item: Dict[str, str] = {
+            "title": entry.get("title", "No Title"),
+            "url": entry.get("link", ""),
+            "source": entry.get("source") or default_source,
+            "published": entry.get("published", "Unknown Date"),
+            "content": entry.get("summary", ""),
+        }
+        if source_type == "rss_audio" and entry.get("media"):
+            item["audio"] = entry["media"]
+        mapped_items.append(item)
+
+    new_items = deduplicate_items(mapped_items)
+    if new_items:
+        res = append_to_raw_log(new_items)
+        print(res)
+    else:
+        print(f"All {len(mapped_items)} items from {url} already seen; 0 new items.")
+
+
 async def process_source(
     source_config: dict,
     model_id: Optional[str] = None,
     debug: bool = False,
-):
+) -> None:
     """
-    Runs the fetcher agent for a single source.
+    Processes a single source: deterministically for RSS feeds, or via the fetcher agent.
     """
-    url = source_config.get("url")
+    url = source_config.get("url", "")
     source_type = source_config.get("type", "unknown")
     instruction = source_config.get("instruction", "")
     
     print(f"\n>>> Processing [{source_type}]: {url}")
+
+    # Bypass LLM fetcher agent for RSS feeds and process deterministically in Python
+    if source_type in ("rss_text", "rss_audio"):
+        try:
+            process_rss_source(source_config)
+        except Exception as e:
+            logger.error(f"Error processing {url}: {e}")
+            print(f"Error: {e}")
+        return
 
     # Manual tool selection is now handled by create_fetcher_agent
     agent = create_fetcher_agent(
@@ -199,7 +248,6 @@ async def run_curate(model_id: Optional[str] = None, debug: bool = False):
     print("\n>>> Starting Curation (Filtering & Ranking)")
     
     # 1. Get total count of raw items
-    from smart_feeds.tools.storage import get_raw_item_count
     total_items = get_raw_item_count()
     print(f"Total raw items to process: {total_items}")
     
@@ -208,7 +256,7 @@ async def run_curate(model_id: Optional[str] = None, debug: bool = False):
         return
 
     # 2. Batch processing configuration
-    BATCH_SIZE = 20  # Adjust as needed to fit context window
+    BATCH_SIZE = 40  # Adjust as needed to fit context window
     
     # 3. Process in batches
     for offset in range(0, total_items, BATCH_SIZE):
@@ -513,14 +561,38 @@ def install_cron(
     paths_to_prepend = []
     
     npx_path = shutil.which("npx")
+    if not npx_path:
+        # Fallback to fnm installations when npx is not on current PATH
+        fnm_default = os.path.expanduser("~/.local/share/fnm/aliases/default/bin/npx")
+        if os.path.exists(fnm_default):
+            npx_path = fnm_default
+        else:
+            candidates = sorted(
+                glob.glob(os.path.expanduser("~/.local/share/fnm/node-versions/*/installation/bin/npx")),
+                reverse=True,
+            )
+            if candidates:
+                npx_path = candidates[0]
+
     if npx_path:
-        paths_to_prepend.append(os.path.dirname(npx_path))
+        # Resolve symlinks so ephemeral fnm_multishells paths are never written to crontab.
+        # In standard Node/fnm layouts, bin/npx symlinks to ../lib/node_modules/npm/bin/npx-cli.js,
+        # so resolving the bin directory gives the persistent installation/bin containing both node and npx.
+        real_npx = os.path.realpath(npx_path)
+        if os.path.basename(real_npx) == "npx":
+            npx_dir = os.path.dirname(real_npx)
+            npx_path = real_npx
+        else:
+            npx_dir = os.path.realpath(os.path.dirname(npx_path))
+            npx_path = os.path.join(npx_dir, "npx")
+        paths_to_prepend.append(npx_dir)
         print(f"Detected npx at: {npx_path}")
     else:
         print("Warning: npx not found in PATH. Ensure it is installed and available or browser tool will FAIL.")
 
     gcloud_path = shutil.which("gcloud")
     if gcloud_path:
+        gcloud_path = os.path.realpath(gcloud_path)
         paths_to_prepend.append(os.path.dirname(gcloud_path))
         print(f"Detected gcloud at: {gcloud_path}")
     else:
