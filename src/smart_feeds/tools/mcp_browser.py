@@ -17,6 +17,22 @@ from smart_feeds import config
 logger = logging.getLogger(__name__)
 
 
+def _resolve_npx_path(candidate: str) -> str:
+    """
+    Resolves symlinks for an npx path while preserving the installation/bin/npx
+    entry point when bin/npx symlinks to ../lib/node_modules/npm/bin/npx-cli.js,
+    so that its directory also contains the sibling `node` binary.
+    """
+    real_path = os.path.realpath(candidate)
+    if os.path.basename(real_path) == "npx":
+        return real_path
+    real_bin_dir = os.path.realpath(os.path.dirname(candidate))
+    bin_npx = os.path.join(real_bin_dir, "npx")
+    if os.path.exists(bin_npx):
+        return bin_npx
+    return real_path
+
+
 def _resolve_npx_command() -> str:
     """
     Resolves the persistent path to the npx executable.
@@ -27,12 +43,12 @@ def _resolve_npx_command() -> str:
     """
     npx_path = shutil.which("npx")
     if npx_path:
-        return os.path.realpath(npx_path)
+        return _resolve_npx_path(npx_path)
 
     # Fallback 1: check fnm default alias when PATH does not include fnm
     fnm_default = os.path.expanduser("~/.local/share/fnm/aliases/default/bin/npx")
     if os.path.exists(fnm_default):
-        return os.path.realpath(fnm_default)
+        return _resolve_npx_path(fnm_default)
 
     # Fallback 2: check installed fnm node versions (highest version first)
     fnm_pattern = os.path.expanduser(
@@ -40,7 +56,7 @@ def _resolve_npx_command() -> str:
     )
     candidates = sorted(glob.glob(fnm_pattern), reverse=True)
     if candidates:
-        return os.path.realpath(candidates[0])
+        return _resolve_npx_path(candidates[0])
 
     return "npx"
 
