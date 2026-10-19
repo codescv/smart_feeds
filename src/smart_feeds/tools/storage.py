@@ -95,7 +95,7 @@ def _clean_title(title: str) -> str:
     Cleans the title:
     1. Removes HTML tags.
     2. Removes newlines.
-    3. Truncates to 80 characters.
+    3. Truncates to 200 characters.
     """
     if not title:
         return "No Title"
@@ -119,8 +119,8 @@ def _clean_title(title: str) -> str:
     clean_title = re.sub(r'\s+', ' ', clean_title).strip()
     
     # Truncate
-    if len(clean_title) > 80:
-        clean_title = clean_title[:77] + "..."
+    if len(clean_title) > 200:
+        clean_title = clean_title[:197] + "..."
         
     return clean_title
 
@@ -267,7 +267,7 @@ def get_raw_item_count() -> int:
     content = read_raw_log()
     if not content or content == "No raw items found for today.":
         return 0
-    return content.count(SEPARATOR) + 1
+    return len([i for i in content.split(SEPARATOR) if i.strip()])
 
 
 def read_raw_items_batch(offset: int, limit: int) -> str:
