@@ -1,33 +1,36 @@
-import os
-from smart_feeds import config
-from typing import Optional, List, Any
+from typing import Any, List, Optional
+
 from google.adk.agents import Agent
+
+from smart_feeds import config
+from smart_feeds.tools.mcp_browser import get_browser_toolset
 from smart_feeds.tools.storage import read_daily_summary, save_deep_dive_report
 
 
-def create_deep_dive_agent(model_id=None, debug: bool = False):
+def create_deep_dive_agent(
+    model_id: Optional[str] = None, debug: bool = False
+) -> Agent:
     """
     Creates the Deep Dive Agent.
     Goal: Read daily summary, visit links, and generate a detailed analysis.
     """
     if model_id is None:
         model_id = config.get_model_id()
-    
-    output_language = config._get_setting("settings", "output_language", default="English")
 
-    # Tools
-    tools = []
-    
-    # 1. Storage tools
-    tools.append(read_daily_summary)
-    tools.append(save_deep_dive_report)
-    
-    # 2. Browser tools
-    # Lazy import to avoid circular dependencies
-    from smart_feeds.tools.mcp_browser import get_browser_toolset
+    output_language = config._get_setting(
+        "settings", "output_language", default="English"
+    )
+
+    tools: List[Any] = [
+        read_daily_summary,
+        save_deep_dive_report,
+    ]
+
     user_data_dir = config.get_browser_user_data_dir()
     # If debug is True, headless is False (browser is visible)
-    browser_toolset = get_browser_toolset(user_data_dir=user_data_dir, headless=not debug)
+    browser_toolset = get_browser_toolset(
+        user_data_dir=user_data_dir, headless=not debug
+    )
     tools.append(browser_toolset)
 
     instruction = f"""

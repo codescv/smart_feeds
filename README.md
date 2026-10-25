@@ -48,7 +48,7 @@ You can automatically run the full pipeline (`fetch`, `curate`, `summarize`) on 
 smartfeeds install-cron "every day at 8 AM"
 ```
 
-This will parse your request into a valid cron expression, resolve persistent paths for `npx` (including `fnm` installations) and `gcloud` via `os.path.realpath`, and install it to your user's crontab for the current workspace. Ensure you are in your workspace directory or use the `-w` flag.
+This will parse your request into a valid cron expression, resolve persistent paths for `gcloud` via `os.path.realpath`, and install it to your user's crontab for the current workspace. Browser sources use native Python Playwright (`channel="chrome"`) directly without requiring Node.js or `@playwright/mcp`. Ensure you are in your workspace directory or use the `-w` flag.
 
 Note: in macOS, may need to approve several popups for cronjob to work.
 

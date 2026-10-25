@@ -30,7 +30,7 @@ Built with `typer`, it provides the following commands exposed via the `smartfee
 #### Fetcher Agent (`fetcher_agent.py`)
 *   **Role**: Content acquisition for `browser` and `http` sources.
 *   **Tools**:
-    *   `browser_toolset`: MCP-based Playwright browser for dynamic websites.
+    *   `browser_toolset`: Native Python Playwright browser toolset (`PlaywrightBrowserToolset` subclassing ADK `BaseToolset`) for dynamic websites (no external MCP / Node.js server required).
     *   `fetch_website_content`: HTTP/BeautifulSoup scraper for static pages.
     *   `deduplicate_items` & `append_to_raw_log`: Deduplicates and logs collected items.
 
@@ -52,11 +52,11 @@ Built with `typer`, it provides the following commands exposed via the `smartfee
 
 ### 3.3 Tools (`src/smart_feeds/tools/`)
 
-#### MCP Browser (`src/smart_feeds/tools/mcp_browser.py`)
-*   Wraps the `@playwright/mcp` server.
-*   Manages the browser lifecycle (headed vs headless) and user data directory persistence.
-*   Passes the full process environment (`os.environ.copy()`) into `StdioServerParameters` so desktop display variables (`DISPLAY`, `WAYLAND_DISPLAY`, `XAUTHORITY`, `XDG_RUNTIME_DIR`) are preserved on Linux when launching a headed browser.
-*   Resolves `npx` via `_resolve_npx_command()` using `os.path.realpath` and falls back to `~/.local/share/fnm/aliases/default/bin/npx` or `~/.local/share/fnm/node-versions/*/installation/bin/npx` when running in restricted `PATH` environments like `cron`, prepending the resolved binary directory to `env["PATH"]` so `node` is always discoverable.
+#### Native Playwright Browser (`src/smart_feeds/tools/mcp_browser.py`)
+*   Implements `PlaywrightBrowserToolset(BaseToolset)` directly on top of `playwright.async_api` without spawning an external `@playwright/mcp` / `npx` subprocess.
+*   Launches persistent browser contexts via `channel="chrome"` with `ignore_default_args=["--enable-automation", "--password-store=basic"]` and a standard desktop Chrome `User-Agent`, ensuring `v11` cookies encrypted in the Linux GNOME Keyring (e.g., when logging in via `/usr/bin/google-chrome`) are seamlessly decrypted in both interactive and headless runs, while bypassing Cloudflare `HeadlessChrome` 403 blocks.
+*   Populates `XDG_RUNTIME_DIR` and `DBUS_SESSION_BUS_ADDRESS` (`unix:path=/run/user/<uid>/bus`) on Linux when missing so `cron` jobs can access the user's D-Bus keyring session.
+*   Exposes focused ADK `FunctionTool`s (`browser_navigate`, `browser_click`, `browser_extract_items`, `browser_get_content`, `browser_scroll`, `browser_evaluate`) and blocks non-`http(s)` schemes such as `file://`.
 
 #### RSS Fetcher (`src/smart_feeds/tools/rss.py`)
 *   Uses `feedparser` to fetch standard RSS/Atom feeds (`limit=30` for Reddit, `limit=3` for audio podcasts, `limit=10` for standard feeds).
